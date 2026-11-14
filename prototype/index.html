@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Earnings Value Intelligence — אבטיפוס (DEMO)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--bg:#0b0c0e;--p1:#111214;--p2:#17181b;--line:#2a2b2e;--ink:#ecebe6;--ink2:#a9a8a0;--ink3:#76756f;--acc:#e8a33d;--s1:#3987e5;--s2:#d95926;--s3:#199e70;--good:#0ca30c;--warn:#fab219;--serious:#ec835a;--crit:#d03b3b;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;overflow-x:hidden;background:var(--bg);color:var(--ink);font:14px/1.55 Heebo,system-ui,sans-serif}
+.num,.tk,input[type=number]{font-family:"IBM Plex Mono",ui-monospace,monospace;direction:ltr;unicode-bidi:isolate}
+.en{direction:ltr;unicode-bidi:isolate;text-align:right}
+.demo-bar{position:sticky;top:0;z-index:20;background:repeating-linear-gradient(135deg,#3a2a05 0 14px,#2c2004 14px 28px);color:#ffd27a;border-bottom:1px solid #6b4d0a;padding:7px 16px;font-weight:500;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.demo-bar b{background:var(--warn);color:#1a1200;padding:1px 8px;border-radius:3px;letter-spacing:.5px}
+.demo-bar span{opacity:.9}
+.top{display:flex;align-items:center;gap:18px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--p1)}
+.logo{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--acc);letter-spacing:1px;direction:ltr}
+.logo small{color:var(--ink2);font-weight:400;margin-left:8px}
+.meta{margin-inline-start:auto;color:var(--ink2);font-size:12px;display:flex;gap:14px;flex-wrap:wrap}
+.layout{display:grid;grid-template-columns:200px minmax(0,1fr);min-height:calc(100vh - 90px)}
+#nav{background:var(--p1);border-inline-end:1px solid var(--line);padding:8px 0;position:sticky;top:34px;align-self:start;height:calc(100vh - 34px);overflow:auto}
+#nav a{display:block;padding:9px 16px;color:var(--ink);text-decoration:none;border-inline-start:3px solid transparent}
+#nav a small{display:block;color:var(--ink3);font-size:11px;direction:ltr;text-align:right}
+#nav a:hover{background:var(--p2)}
+#nav a.on{background:var(--p2);border-inline-start-color:var(--acc)}
+#nav a.on span{color:var(--acc)}
+#main{padding:16px;min-width:0}
+.panel{background:var(--p1);border:1px solid var(--line);border-radius:6px;margin-bottom:16px;padding:14px}
+.panel>header{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.panel h2{margin:0;font-size:16px;font-weight:700}
+.panel h2 .tk{font-size:12px;color:var(--ink2);font-weight:400}
+.panel h3{font-size:14px;margin:18px 0 6px;color:var(--ink)}
+.panel .sub{color:var(--ink2);font-size:12px}
+.grid2{display:grid;grid-template-columns:1fr;gap:0}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:1000px){.split{grid-template-columns:1fr}.layout{grid-template-columns:1fr}#nav{position:static;height:auto;display:flex;overflow-x:auto}#nav a{white-space:nowrap}}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:4px}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;vertical-align:middle}
+td.small,.small{white-space:normal;min-width:180px;font-size:12px;color:var(--ink2)}
+thead th{background:var(--p2);color:var(--ink2);font-weight:500;position:sticky;top:0}
+th.n,td.n{text-align:left}
+th.sortable{cursor:pointer}th.sortable:hover{color:var(--acc)}
+tr.click{cursor:pointer}tr.click:hover td{background:#1c1d21}
+tr.sel td{background:#1f2026}
+.pos{color:#5fb3ff}.neg{color:#ff9a72}
+.score{display:inline-flex;align-items:center;gap:6px;min-width:76px}
+.score i{display:block;height:6px;border-radius:3px;max-width:44px;width:44px;background:var(--line);position:relative;overflow:hidden}
+.score i::after{content:"";position:absolute;inset:0 auto 0 0}
+.score{position:relative}
+.score i{background:linear-gradient(90deg,currentColor var(--w,0%),var(--line) 0)}
+.sc-good{color:var(--good)}.sc-warn{color:var(--warn)}.sc-serious{color:var(--serious)}.sc-crit{color:var(--crit)}
+.score b{color:var(--ink);font-weight:600}
+.cls{display:inline-block;padding:2px 8px;border-radius:3px;font-size:12px;border:1px solid}
+.cls0{color:#7fd17f;border-color:#2e6b2e;background:#102410}.cls1{color:#ffd27a;border-color:#6b5414;background:#231c06}.cls2{color:var(--ink2);border-color:#44454a;background:#1a1b1e}.cls3{color:#ff8b8b;border-color:#7a2a2a;background:#2a1010}
+.tag{display:inline-block;font-size:11px;padding:0 6px;border-radius:3px;border:1px solid #44454a;color:var(--ink2)}
+.tag-ok{border-color:#2e6b2e;color:#7fd17f}.tag-est{border-color:#6b5414;color:#ffd27a}.tag-bad{border-color:#7a2a2a;color:#ff8b8b}
+.lyr{display:inline-block;font:600 9.5px "IBM Plex Mono",monospace;padding:0 4px;border-radius:2px;margin-inline-end:2px;vertical-align:middle;border:1px solid}
+.lyr-RAW{color:#9ec5f4;border-color:#256abf}.lyr-CALC{color:#8fe0bf;border-color:#199e70}.lyr-MODEL{color:#ffc58f;border-color:#a0521f}.lyr-AI{color:#c9c1ff;border-color:#6250d6}
+.srccell small{color:var(--ink3);margin-inline-start:4px;font-family:"IBM Plex Mono",monospace}
+.star{background:none;border:0;color:var(--ink3);font-size:16px;cursor:pointer;padding:0 2px}.star.on{color:var(--acc)}
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px}
+.filters label{color:var(--ink2);font-size:12.5px}
+.inp{background:var(--p2);border:1px solid var(--line);color:var(--ink);border-radius:4px;padding:5px 8px;font:inherit}
+.inp.sm{width:64px}
+.btn{background:#1d1e22;border:1px solid #3a3b40;color:var(--ink);border-radius:4px;padding:5px 12px;cursor:pointer;font:inherit}.btn:hover{border-color:var(--acc);color:var(--acc)}.btn.sm{padding:2px 8px;font-size:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+.chip{background:var(--p2);border:1px solid var(--line);color:var(--ink2);border-radius:12px;padding:2px 10px;font-size:12px;cursor:pointer;direction:ltr}.chip.on{border-color:var(--acc);color:var(--acc)}
+.note{color:var(--ink3);font-size:12px;margin:8px 0 0}
+.txt{color:var(--ink);line-height:1.75;margin:10px 0;max-width:900px}
+.empty{color:var(--ink2);padding:20px;text-align:center}
+.ch{position:relative;width:100%}
+.hb{display:grid;grid-template-columns:160px 1fr 60px;gap:8px;align-items:center;margin:6px 0}
+.hb small{grid-column:1/-1;color:var(--ink3);font-size:11px;margin-top:-4px}
+.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden}.bar i{display:block;height:100%;background:var(--s1);border-radius:4px}
+.alert{border:1px solid;border-radius:4px;padding:8px 10px;margin:8px 0;font-size:13px}
+.alert.crit{border-color:#7a2a2a;background:#220d0d;color:#ffb0b0}.alert.warn{border-color:#6b5414;background:#1f1905;color:#ffd99a}.alert.okk{border-color:#2e6b2e;background:#0e1d0e;color:#9fdc9f}
+.alert.mini{padding:2px 6px;margin:2px 0;font-size:11.5px}
+.sev4{color:var(--crit);font-weight:700}
+.sevb{font-size:12px}.sev-good{color:var(--good)}.sev-warn{color:var(--warn)}.sev-serious{color:var(--serious)}.sev-crit{color:var(--crit)}
+.newb{color:#ffb38a}
+.ovr{font-size:12px;font-weight:600}.ovr-disqualify{color:#ff8b8b}.ovr-cap{color:#ffd27a}
+.kv{margin-top:12px;font-size:12.5px}.kv th{color:var(--ink2);font-weight:400;width:50%}
+.rb{position:relative;width:150px;height:14px}
+.rb .rng{position:absolute;top:5px;height:4px;background:#2b4d78;border-radius:2px}
+.rb .mid{position:absolute;top:1px;width:3px;height:12px;background:var(--s1);margin-right:-1px}
+.rb .px{position:absolute;top:-2px;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid var(--ink);margin-right:-5px}
+.hero{display:flex;gap:22px;flex-wrap:wrap;padding:10px 0 6px}
+.hero>div{display:flex;flex-direction:column;gap:3px}.hero small{color:var(--ink3);font-size:11px}
+.demo-inline{background:#1f1905;border:1px dashed #6b5414;color:#ffd99a;padding:6px 10px;border-radius:4px;font-size:12.5px;margin:6px 0 4px}
+.rsec{border-top:1px solid var(--line);padding-top:4px}
+.rsec h3 small{color:var(--ink3);font-weight:400;margin-inline-start:6px}
+.sl{display:grid;grid-template-columns:170px 1fr 64px;gap:8px;align-items:center;margin:8px 0;color:var(--ink2)}
+.sl input[type=range]{accent-color:var(--s1)}
+.sens td,.sens th{text-align:center}
+.mon{border:1px solid var(--line);border-radius:4px;padding:10px;margin-bottom:12px}
+.mon h3{margin:0 0 6px}.mon h3 small{color:var(--ink2);font-weight:400;margin-inline-start:6px}
+.kpis{display:flex;flex-wrap:wrap;gap:16px;color:var(--ink2);font-size:12.5px;margin-bottom:6px}.kpis b{color:var(--ink)}
+.layers{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.layers>div{background:var(--p2);border:1px solid var(--line);border-radius:4px;padding:10px;display:flex;flex-direction:column;gap:4px}.layers small{color:var(--ink2)}
+@media(max-width:800px){.layers{grid-template-columns:1fr 1fr}}
+#toast{position:fixed;bottom:18px;left:18px;background:#1d1e22;border:1px solid var(--acc);color:var(--ink);padding:8px 14px;border-radius:4px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}#toast.on{opacity:1}
+.nodl .exp{display:none}
+footer{color:var(--ink3);font-size:11.5px;padding:10px 16px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="demo-bar"><b>DEMO</b><span>מצב הדגמה: כל החברות בדיוניות (סיומת ‎.D‎) וכל המספרים סינתטיים. אין לראות בהם נתוני שוק אמיתיים, ניתוח שוק או המלצת השקעה.</span></div>
+<div class="top"><div class="logo">EVI <small>Earnings Value Intelligence · Phase 1 Prototype</small></div>
+<div class="meta"><span>ספק נתונים: <b class="num">DemoProvider</b> (isReal=false)</span><span>תמונת נתונים: <b class="num">2026-11-14</b></span><span>סריקה אחרונה: <b class="num" id="scanTime"></b></span></div></div>
+<div class="layout"><nav id="nav"></nav><main id="main"></main></div>
+<footer>אבטיפוס להדגמת מנגנונים בלבד. אינו ייעוץ השקעות. המודלים, הספים והמשקלות הם הנחות עבודה שטרם אומתו על נתוני שוק אמיתיים.</footer>
+<div id="toast"></div>
+<script>/* =====================================================================
+   Earnings Value Intelligence — ENGINE (data provider + analytics)
+   כל הנתונים בקובץ זה הם נתוני הדגמה סינתטיים. החברות בדיוניות.
+   ===================================================================== */
+const SNAPSHOT_DATE = '2026-11-14';
+const DEMO_SOURCE = 'DEMO · נתונים סינתטיים';
+
+/* ---------- Data Provider layer (swappable) ---------- */
+const DemoProvider = {
+  name: 'DemoProvider',
+  isReal: false,
+  asOf: SNAPSHOT_DATE,
+  universe() { return RAW_COMPANIES; },
+  sectorMedians() { return SECTOR_MEDIANS; },
+};
+
+/* Sector peer medians — DEMO */
+const SECTOR_MEDIANS = {
+  'Software & SaaS':        { pe: 40, fpe: 32, evRev: 7.0, evEbitda: 28, evFcf: 30, pfcf: 32, ps: 7.5 },
+  'Cybersecurity':          { pe: 50, fpe: 40, evRev: 9.0, evEbitda: 35, evFcf: 32, pfcf: 34, ps: 9.0 },
+  'Semiconductors':         { pe: 28, fpe: 22, evRev: 6.0, evEbitda: 20, evFcf: 30, pfcf: 30, ps: 6.0 },
+  'Data Infrastructure':    { pe: 45, fpe: 35, evRev: 8.0, evEbitda: 30, evFcf: 35, pfcf: 36, ps: 8.0 },
+  'Cloud Computing':        { pe: 45, fpe: 35, evRev: 8.0, evEbitda: 30, evFcf: 35, pfcf: 36, ps: 8.0 },
+  'Artificial Intelligence':{ pe: 60, fpe: 45, evRev: 12,  evEbitda: 40, evFcf: 45, pfcf: 48, ps: 12 },
+  'Automation & Robotics':  { pe: 26, fpe: 21, evRev: 3.5, evEbitda: 18, evFcf: 25, pfcf: 26, ps: 3.5 },
+  'Enterprise Technology':  { pe: 22, fpe: 18, evRev: 4.0, evEbitda: 16, evFcf: 18, pfcf: 19, ps: 4.0 },
+};
+
+/* $ in millions except price / per-share. All fictional. */
+const RAW_COMPANIES = [
+ { id:'NMBL', name:'Nimbus Ledger Systems', ticker:'NMBL.D', exch:'NASDAQ', sector:'Software & SaaS',
+   desc:'פלטפורמת SaaS לניהול כספים ורו"ח לארגונים בינוניים: הנהלת חשבונות, סגירת חודש אוטומטית ותחזיות תזרים.',
+   moat:'עלויות מעבר גבוהות (מערכת רשומה פיננסית), אינטגרציות רבות ובסיס לקוחות נאמן עם שימור הכנסות נטו מעל 110%.',
+   price:62.4, high52:98, low52:55, ret1y:-28, ret3m:-6, shares:210, shares3y:196,
+   cash:1450, stInv:900, stDebt:0, ltDebt:1150, convDebt:1150, totalAssets:6200, totalLiab:3100, curAssets:3300, curLiab:1700, recv:650, inventory:0,
+   rev:[1520,1840,2160,2480,2760], grossProfit:2210, opIncome:360, ebitda:520, netIncome:310, interest:12, ocf:830, capex:70, sbc:380,
+   opMarginPrev:0.11, fcfPrev:640, investedCapital:3600, epsTTM:1.48, fwdEps:1.85,
+   earnOffset:12, confirmed:true, timing:'AMC', epsEst:0.42, revEstQ:712, rev90:3.1, revUp:9, revDown:2, guidance:'maintained',
+   guidanceNote:'ההנהלה שמרה על תחזית הכנסות שנתית; תחזית מרווח תפעולי הועלתה מעט ברבעון הקודם.',
+   hist:{ eps:[6,8,4,9,3,7,5,6], rev:[1.5,2.0,0.8,1.9,0.6,1.4,1.1,1.2] },
+   sim:{ pre:2.0, k:0.9, noise:6, post:1.5, vol:2.4 },
+   maturities:[{y:2028,a:575},{y:2030,a:575}],
+   insiders:[{d:'2026-10-02',who:'CEO',type:'sell',val:4.2,plan:'10b5-1'},{d:'2026-09-15',who:'CFO',type:'sell',val:0.6,plan:'tax'},{d:'2026-08-21',who:'Director',type:'buy',val:1.1,plan:'open'}],
+   dilution:{ buyback:800, shelf:false, atm:false, options:9 },
+   news:[{d:'2026-09-30',cat:'Executive Departure',title:'עזיבת סמנכ"ל ההכנסות (CRO)',status:'מאומת',sev:2,known:true,structural:false,impact:'סיכון ביצוע במכירות בטווח הקצר.'},
+         {d:'2026-10-20',cat:'Competitive Threat',title:'חשש בשוק מסוכני AI שיחליפו תוכנות הנה"ח',status:'ספקולטיבי',sev:2,known:true,structural:true,impact:'לחץ על מכפילים; אין עדות לנטישת לקוחות בנתונים.'}],
+   hist5y:{ evFcf:45, evEbitda:60, ps:12 } },
+
+ { id:'ARCD', name:'Arclight Cyber Defense', ticker:'ARCD.D', exch:'NASDAQ', sector:'Cybersecurity',
+   desc:'פלטפורמת אבטחת קצה (XDR) ואבטחת זהויות בענן לארגונים גדולים.',
+   moat:'אפקט רשת של מודיעין איומים, פלטפורמה מאוחדת שמקטינה ספקים, מותג חזק בקרב CISO.',
+   price:141, high52:158, low52:102, ret1y:22, ret3m:14, shares:330, shares3y:300,
+   cash:2100, stInv:1300, stDebt:0, ltDebt:2000, convDebt:2000, totalAssets:11000, totalLiab:7600, curAssets:5200, curLiab:4700, recv:1400, inventory:0,
+   rev:[2100,2750,3400,4050,4700], grossProfit:3570, opIncome:140, ebitda:520, netIncome:90, interest:20, ocf:1600, capex:210, sbc:1050,
+   opMarginPrev:0.01, fcfPrev:1150, investedCapital:5000, epsTTM:0.27, fwdEps:2.10,
+   earnOffset:9, confirmed:true, timing:'AMC', epsEst:0.55, revEstQ:1268, rev90:1.2, revUp:7, revDown:3, guidance:'raised',
+   guidanceNote:'בדוח הקודם הועלתה תחזית ה-ARR השנתית.',
+   hist:{ eps:[12,10,9,11,8,10,7,9], rev:[2.5,2.0,1.8,2.1,1.5,1.6,1.2,1.4] },
+   sim:{ pre:3.5, k:0.4, noise:8, post:0.5, vol:2.8 },
+   maturities:[{y:2027,a:1000},{y:2029,a:1000}],
+   insiders:[{d:'2026-10-28',who:'CEO',type:'sell',val:22,plan:'open'},{d:'2026-09-10',who:'Director',type:'sell',val:3,plan:'10b5-1'}],
+   dilution:{ buyback:0, shelf:true, atm:false, options:25 },
+   news:[{d:'2026-08-12',cat:'Litigation',title:'תביעה ייצוגית בטענה לגילוי לא מלא של נטישת לקוחות',status:'טענה',sev:3,known:true,structural:false,impact:'עלויות משפטיות; סיכון תדמיתי.'},
+         {d:'2026-11-06',cat:'Cybersecurity Incident',title:'דיווח עיתונאי על פריצה אצל לקוח המיוחסת לפגיעות במוצר',status:'טענה',sev:3,known:false,structural:false,impact:'אם יאומת — פגיעה באמון וחידושי חוזים.'}],
+   hist5y:{ evFcf:70, evEbitda:120, ps:15 } },
+
+ { id:'QFRG', name:'Quanta Forge Semiconductor', ticker:'QFRG.D', exch:'NASDAQ', sector:'Semiconductors',
+   desc:'מתכננת שבבי תקשורת ומאיצים למרכזי נתונים ולתעשייה (fabless).',
+   moat:'קניין רוחני ב-SerDes ומעבדי רשת, קשרי Design-win ארוכי טווח עם יצרני שרתים.',
+   price:88, high52:132, low52:80, ret1y:-31, ret3m:-12, shares:520, shares3y:530,
+   cash:3200, stInv:1800, stDebt:400, ltDebt:4200, convDebt:0, totalAssets:22000, totalLiab:9000, curAssets:9500, curLiab:3800, recv:2100, inventory:2600,
+   rev:[7200,9100,8300,10400,11200], grossProfit:5600, opIncome:2600, ebitda:3700, netIncome:2050, interest:190, ocf:3500, capex:1300, sbc:380,
+   opMarginPrev:0.27, fcfPrev:2400, investedCapital:16000, epsTTM:3.94, fwdEps:4.60,
+   earnOffset:18, confirmed:false, timing:'AMC', epsEst:0.98, revEstQ:2850, rev90:-4.5, revUp:3, revDown:11, guidance:'lowered',
+   guidanceNote:'ההנהלה הנמיכה את תחזית הרבעון בשל תיקון מלאי אצל לקוחות תעשייתיים.',
+   hist:{ eps:[4,6,-2,5,3,-1,2,4], rev:[1.0,1.5,-0.8,1.2,0.4,-0.5,0.3,0.8] },
+   sim:{ pre:0.5, k:1.2, noise:7, post:-0.5, vol:2.9 },
+   maturities:[{y:2027,a:400},{y:2029,a:1800},{y:2032,a:2400}],
+   insiders:[{d:'2026-09-25',who:'Director',type:'buy',val:2.5,plan:'open'}],
+   dilution:{ buyback:3000, shelf:false, atm:false, options:6 },
+   news:[{d:'2026-07-18',cat:'Regulatory',title:'הגבלות ייצוא אפשריות — חשיפה של כ-18% מההכנסות לסין',status:'מאומת',sev:3,known:true,structural:false,impact:'סיכון להכנסות; תלוי בהחלטות רגולטור.'},
+         {d:'2026-10-05',cat:'Guidance Cut',title:'מחזור תיקון מלאי בשוק התעשייתי',status:'מאומת',sev:2,known:true,structural:false,impact:'האטה מחזורית — לא בהכרח מבנית.'}],
+   hist5y:{ evFcf:28, evEbitda:16, ps:6.5 } },
+
+ { id:'HLXD', name:'Helix Data Fabric', ticker:'HLXD.D', exch:'NYSE', sector:'Data Infrastructure',
+   desc:'פלטפורמת שילוב נתונים בזמן אמת (streaming ETL) לארגונים.',
+   moat:'מוצר טכנולוגי חזק אך שוק תחרותי מאוד; יתרון תחרותי עדיין לא מוכח.',
+   price:34.5, high52:41, low52:22, ret1y:35, ret3m:8, shares:150, shares3y:110,
+   cash:420, stInv:0, stDebt:120, ltDebt:900, convDebt:0, totalAssets:2600, totalLiab:1900, curAssets:800, curLiab:760, recv:300, inventory:0,
+   rev:[310,420,540,650,760], grossProfit:500, opIncome:-95, ebitda:-30, netIncome:-140, interest:55, ocf:-20, capex:45, sbc:110,
+   opMarginPrev:-0.22, fcfPrev:-110, investedCapital:1500, epsTTM:-0.93, fwdEps:-0.55,
+   earnOffset:22, confirmed:false, timing:'AMC', epsEst:-0.18, revEstQ:205, rev90:0.5, revUp:4, revDown:3, guidance:'maintained',
+   guidanceNote:'ההנהלה שמרה על יעד איזון EBITDA בשנה הבאה.',
+   hist:{ eps:[15,-5,10,-8,6], rev:[3.0,1.0,2.0,-1.0,1.5] },
+   sim:{ pre:4.0, k:0.8, noise:11, post:0.0, vol:4.2 },
+   maturities:[{y:2027,a:120},{y:2028,a:900}],
+   insiders:[{d:'2026-10-11',who:'Director',type:'sell',val:2.8,plan:'open'},{d:'2026-10-14',who:'Director',type:'sell',val:1.9,plan:'open'},{d:'2026-10-19',who:'10% Owner',type:'sell',val:14,plan:'open'}],
+   dilution:{ buyback:0, shelf:true, atm:true, options:14 },
+   news:[{d:'2026-09-03',cat:'Share Dilution',title:'הוכרזה תוכנית ATM בהיקף $300M',status:'מאומת',sev:3,known:true,structural:false,impact:'דילול אפשרי של עד ~6% במחיר הנוכחי.'},
+         {d:'2026-11-09',cat:'Auditor Resignation',title:'התפטרות רואה החשבון המבקר (דיווח 8-K Item 4.01)',status:'מאומת',sev:4,known:false,structural:false,impact:'דגל אדום חמור: סיכון לאיכות הדיווח הכספי.'}],
+   hist5y:{ evFcf:null, evEbitda:null, ps:6.0 } },
+
+ { id:'ORBA', name:'Orbital Automation Robotics', ticker:'ORBA.D', exch:'NYSE', sector:'Automation & Robotics',
+   desc:'רובוטיקה תעשייתית ומערכות אוטומציה למחסנים ולמפעלי רכב.',
+   moat:'בסיס מותקן גדול שמייצר הכנסות שירות ותחזוקה חוזרות (~35% מההכנסות).',
+   price:47, high52:61, low52:43, ret1y:-15, ret3m:-4, shares:140, shares3y:142,
+   cash:600, stInv:200, stDebt:150, ltDebt:1100, convDebt:0, totalAssets:5200, totalLiab:2600, curAssets:2400, curLiab:1250, recv:700, inventory:900,
+   rev:[3400,3700,3950,4100,4180], grossProfit:1500, opIncome:520, ebitda:720, netIncome:360, interest:52, ocf:560, capex:140, sbc:60,
+   opMarginPrev:0.135, fcfPrev:390, investedCapital:4000, epsTTM:2.57, fwdEps:2.85,
+   earnOffset:27, confirmed:true, timing:'BMO', epsEst:0.68, revEstQ:1060, rev90:-1.0, revUp:4, revDown:6, guidance:'maintained',
+   guidanceNote:'תחזית שנתית נשמרה; ההנהלה ציינה עיכובים בהזמנות מתעשיית הרכב.',
+   hist:{ eps:[2,1,3,-1,2,0,1,2], rev:[0.5,0.2,0.6,-0.4,0.3,-0.1,0.2,0.4] },
+   sim:{ pre:0.3, k:1.0, noise:5, post:0.2, vol:1.8 },
+   maturities:[{y:2027,a:150},{y:2029,a:500},{y:2031,a:600}],
+   insiders:[{d:'2026-09-01',who:'CFO',type:'sell',val:0.3,plan:'tax'}],
+   dilution:{ buyback:400, shelf:false, atm:false, options:3 },
+   news:[{d:'2026-08-27',cat:'Customer Loss',title:'אובדן חוזה אוטומציה מול יצרנית רכב גדולה',status:'מאומת',sev:2,known:true,structural:false,impact:'כ-3% מההכנסות; חלקית מקוזז בצבר הזמנות ממחסנים.'}],
+   hist5y:{ evFcf:22, evEbitda:13, ps:2.2 } },
+
+ { id:'CBLT', name:'Cobalt Cloud Works', ticker:'CBLT.D', exch:'NASDAQ', sector:'Cloud Computing',
+   desc:'ספקית תשתיות ענן מנוהלות ופלטפורמת Kubernetes לארגונים.',
+   moat:'יתרון לגודל ברכש חומרה, מוניטין תפעולי וצמיחה עקבית בשימוש של לקוחות קיימים.',
+   price:118, high52:125, low52:78, ret1y:30, ret3m:11, shares:290, shares3y:280,
+   cash:2600, stInv:2100, stDebt:0, ltDebt:0, convDebt:0, totalAssets:9800, totalLiab:3900, curAssets:6100, curLiab:2300, recv:1200, inventory:0,
+   rev:[2900,3500,4150,4900,5700], grossProfit:4050, opIncome:1080, ebitda:1400, netIncome:980, interest:0, ocf:1850, capex:380, sbc:420,
+   opMarginPrev:0.17, fcfPrev:1180, investedCapital:3800, epsTTM:3.38, fwdEps:4.30,
+   earnOffset:5, confirmed:true, timing:'AMC', epsEst:0.93, revEstQ:1560, rev90:5.2, revUp:14, revDown:1, guidance:'raised',
+   guidanceNote:'תחזית הכנסות שנתית הועלתה פעמיים השנה.',
+   hist:{ eps:[9,7,11,8,10,6,9,8], rev:[2.0,1.6,2.4,1.8,2.1,1.2,1.9,1.7] },
+   sim:{ pre:2.5, k:0.6, noise:7, post:1.8, vol:2.5 },
+   maturities:[],
+   insiders:[{d:'2026-10-15',who:'CEO',type:'sell',val:9,plan:'10b5-1'}],
+   dilution:{ buyback:1500, shelf:false, atm:false, options:8 },
+   news:[{d:'2026-09-19',cat:'Product Failure',title:'תקלת שירות אזורית של 6 שעות',status:'מאומת',sev:1,known:true,structural:false,impact:'זניחה; זיכויי SLA.'}],
+   hist5y:{ evFcf:55, evEbitda:45, ps:13 } },
+
+ { id:'VRDA', name:'Veridian AI Labs', ticker:'VRDA.D', exch:'NASDAQ', sector:'Artificial Intelligence',
+   desc:'פלטפורמת אימון והרצת מודלי AI לארגונים, כולל שירותי הסקה מנוהלים.',
+   moat:'תוכנה ייעודית לאופטימיזציית חומרה ובסיס מפתחים רחב; תחרות חזקה מצד ענקיות הענן.',
+   price:212, high52:260, low52:120, ret1y:60, ret3m:-10, shares:410, shares3y:380,
+   cash:3800, stInv:4200, stDebt:0, ltDebt:1500, convDebt:1500, totalAssets:16000, totalLiab:5200, curAssets:9600, curLiab:2900, recv:1800, inventory:0,
+   rev:[1200,1900,3100,4800,6900], grossProfit:5100, opIncome:1380, ebitda:1800, netIncome:1250, interest:18, ocf:2300, capex:900, sbc:1100,
+   opMarginPrev:0.12, fcfPrev:900, investedCapital:7000, epsTTM:3.05, fwdEps:5.10,
+   earnOffset:15, confirmed:false, timing:'AMC', epsEst:0.92, revEstQ:2050, rev90:8.0, revUp:18, revDown:2, guidance:'raised',
+   guidanceNote:'התחזית השנתית הועלתה ב-12% בדוח הקודם.',
+   hist:{ eps:[20,15,18,12,22,9,14,10], rev:[6,4,5,3,7,2,4,3] },
+   sim:{ pre:5.0, k:0.3, noise:12, post:1.0, vol:4.0 },
+   maturities:[{y:2030,a:1500}],
+   insiders:[{d:'2026-10-01',who:'CEO',type:'sell',val:85,plan:'10b5-1'},{d:'2026-10-22',who:'Director',type:'sell',val:12,plan:'open'}],
+   dilution:{ buyback:0, shelf:true, atm:false, options:30 },
+   news:[{d:'2026-11-03',cat:'Short Seller Report',title:'דוח Short Seller בטענה ל"הכנסות מעגליות" מול שותף חומרה',status:'טענה',sev:3,known:false,structural:false,impact:'החברה הכחישה; אם יאומת — השלכה מהותית על ההכנסות.'},
+         {d:'2026-10-26',cat:'Regulatory',title:'בירור של רגולטור צרכני לגבי שימוש בנתוני לקוחות',status:'מאומת',sev:2,known:false,structural:false,impact:'שלב מוקדם; השפעה כספית לא ידועה.'}],
+   hist5y:{ evFcf:140, evEbitda:90, ps:25 } },
+
+ { id:'STRM', name:'Stratum Enterprise Software', ticker:'STRM.D', exch:'NYSE', sector:'Enterprise Technology',
+   desc:'חבילת תוכנות ERP ו-HR ותיקה לארגונים גדולים, במעבר מרישוי לענן.',
+   moat:'בסיס לקוחות ענק ועלויות מעבר גבוהות, אך מוצר מזדקן מול מתחרות AI-native.',
+   price:29.8, high52:44, low52:27, ret1y:-24, ret3m:-9, shares:380, shares3y:405,
+   cash:1900, stInv:0, stDebt:500, ltDebt:3600, convDebt:0, totalAssets:14000, totalLiab:9000, curAssets:3900, curLiab:3300, recv:1500, inventory:0,
+   rev:[5600,5750,5900,5980,6020], grossProfit:4300, opIncome:1500, ebitda:2100, netIncome:950, interest:210, ocf:1950, capex:250, sbc:280,
+   opMarginPrev:0.26, fcfPrev:1720, investedCapital:10000, epsTTM:2.50, fwdEps:2.85,
+   earnOffset:20, confirmed:true, timing:'BMO', epsEst:0.71, revEstQ:1515, rev90:-2.2, revUp:2, revDown:9, guidance:'maintained',
+   guidanceNote:'יעד המעבר לענן נדחה בשנה; תחזית ההכנסות נשמרה בקצה התחתון.',
+   hist:{ eps:[3,2,1,2,0,1,-1,1], rev:[0.2,0.1,-0.3,0.1,-0.2,0.0,-0.5,-0.1] },
+   sim:{ pre:0.2, k:0.7, noise:5, post:-0.3, vol:1.7 },
+   maturities:[{y:2026,a:500},{y:2027,a:1200},{y:2029,a:1400},{y:2033,a:1000}],
+   insiders:[],
+   dilution:{ buyback:2000, shelf:false, atm:false, options:4 },
+   news:[{d:'2026-10-09',cat:'Competitive Threat',title:'סקרי לקוחות מצביעים על בחינת מעבר למתחרות AI-native',status:'טענה',sev:3,known:true,structural:true,impact:'סיכון מבני לצמיחה ולמחיר.'},
+         {d:'2026-07-29',cat:'Guidance Cut',title:'דחיית יעד מעבר הענן בשנה',status:'מאומת',sev:2,known:true,structural:true,impact:'האטה בהכנסות חוזרות.'}],
+   hist5y:{ evFcf:16, evEbitda:12, ps:4.5 } },
+
+ { id:'PYLN', name:'Pylon Networks Security', ticker:'PYLN.D', exch:'NASDAQ', sector:'Cybersecurity',
+   desc:'אבטחת רשתות ו-SASE לעסקים בינוניים, במודל מנוי.',
+   moat:'ערוץ הפצה חזק דרך ספקי שירות מנוהלים (MSSP) ומוצר משולב בעלות נמוכה.',
+   price:56, high52:79, low52:50, ret1y:-18, ret3m:-3, shares:165, shares3y:158,
+   cash:1100, stInv:700, stDebt:0, ltDebt:690, convDebt:690, totalAssets:4200, totalLiab:2500, curAssets:2600, curLiab:1500, recv:500, inventory:0,
+   rev:[980,1220,1480,1740,1990], grossProfit:1590, opIncome:230, ebitda:330, netIncome:210, interest:6, ocf:640, capex:50, sbc:240,
+   opMarginPrev:0.08, fcfPrev:480, investedCapital:1800, epsTTM:1.27, fwdEps:1.60,
+   earnOffset:11, confirmed:true, timing:'AMC', epsEst:0.38, revEstQ:538, rev90:2.4, revUp:8, revDown:2, guidance:'raised',
+   guidanceNote:'תחזית הכנסות ומרווח הועלו בדוח האחרון.',
+   hist:{ eps:[8,6,9,5,7,8,6,10], rev:[1.5,1.2,1.8,0.9,1.4,1.6,1.1,2.0] },
+   sim:{ pre:1.5, k:0.8, noise:6, post:1.2, vol:2.6 },
+   maturities:[{y:2029,a:690}],
+   insiders:[{d:'2026-09-12',who:'Director',type:'buy',val:3,plan:'open'}],
+   dilution:{ buyback:300, shelf:false, atm:false, options:7 },
+   news:[{d:'2026-08-05',cat:'Executive Departure',title:'חילופי CFO במסגרת פרישה מתוכננת',status:'מאומת',sev:1,known:true,structural:false,impact:'מעבר מסודר; מחליף מבפנים.'}],
+   hist5y:{ evFcf:38, evEbitda:50, ps:10 } },
+
+ { id:'SLVW', name:'Silvane Wafer Technologies', ticker:'SLVW.D', exch:'NYSE', sector:'Semiconductors',
+   desc:'ציוד ותהליכי מדידה לייצור פרוסות סיליקון.',
+   moat:'מיקום חזק בנישת מטרולוגיה עם מעט מתחרים ושילוב עמוק בקווי ייצור.',
+   price:73, high52:90, low52:52, ret1y:5, ret3m:18, shares:260, shares3y:262,
+   cash:1400, stInv:300, stDebt:200, ltDebt:1800, convDebt:0, totalAssets:9000, totalLiab:4300, curAssets:3600, curLiab:1600, recv:900, inventory:1200,
+   rev:[3100,3600,3300,3900,4400], grossProfit:2000, opIncome:880, ebitda:1250, netIncome:650, interest:85, ocf:1250, capex:520, sbc:120,
+   opMarginPrev:0.18, fcfPrev:560, investedCapital:7500, epsTTM:2.50, fwdEps:3.20,
+   earnOffset:-4, confirmed:true, timing:'AMC', epsEst:null, revEstQ:null, rev90:6.0, revUp:12, revDown:1, guidance:'raised', lastReact:11.5,
+   guidanceNote:'בדוח שפורסם לפני 4 ימים הועלתה התחזית לרבעון הבא מעל הקונצנזוס.',
+   hist:{ eps:[7,3,-4,5,2,6,1,9], rev:[1.5,0.5,-1.0,1.0,0.6,1.2,0.2,2.2] },
+   sim:{ pre:0.5, k:1.0, noise:6, post:1.2, vol:2.6 },
+   maturities:[{y:2027,a:200},{y:2030,a:1800}],
+   insiders:[], dilution:{ buyback:500, shelf:false, atm:false, options:4 },
+   news:[], hist5y:{ evFcf:30, evEbitda:15, ps:4.5 } },
+
+ { id:'FRRB', name:'Ferrous Robotics', ticker:'FRRB.D', exch:'NASDAQ', sector:'Automation & Robotics',
+   desc:'רובוטים ניידים אוטונומיים (AMR) ללוגיסטיקה.',
+   moat:'טכנולוגיה מבטיחה אך ללא יתרון לגודל; תחרות מחירים חריפה.',
+   price:21, high52:38, low52:20, ret1y:-40, ret3m:-22, shares:95, shares3y:80,
+   cash:180, stInv:0, stDebt:60, ltDebt:420, convDebt:0, totalAssets:1400, totalLiab:900, curAssets:520, curLiab:480, recv:140, inventory:220,
+   rev:[380,520,610,640,620], grossProfit:190, opIncome:-40, ebitda:10, netIncome:-75, interest:34, ocf:-25, capex:40, sbc:45,
+   opMarginPrev:0.02, fcfPrev:20, investedCapital:1100, epsTTM:-0.79, fwdEps:-0.40,
+   earnOffset:-6, confirmed:true, timing:'BMO', epsEst:null, revEstQ:null, rev90:-12, revUp:0, revDown:8, guidance:'lowered', lastReact:-14,
+   guidanceNote:'בדוח שפורסם לפני 6 ימים הורדה התחזית השנתית ב-9%.',
+   hist:{ eps:[5,-3,2,-10,-6,1,-8,-15], rev:[1,-1,0.5,-2,-1.5,0.3,-1.8,-3] },
+   sim:{ pre:-0.5, k:0.9, noise:7, post:-1.0, vol:3.6 },
+   maturities:[{y:2027,a:420},{y:2028,a:60}],
+   insiders:[{d:'2026-10-30',who:'CFO',type:'sell',val:0.4,plan:'open'}],
+   dilution:{ buyback:0, shelf:true, atm:false, options:6 },
+   news:[{d:'2026-11-08',cat:'Guidance Cut',title:'הורדת תחזית שנתית',status:'מאומת',sev:3,known:false,structural:false,impact:'לחץ על הכנסות ומרווחים.'},
+         {d:'2026-11-08',cat:'Accounting Issues',title:'קבלת ויתור מהבנקים על הפרת אמת מידה פיננסית (covenant waiver)',status:'מאומת',sev:3,known:false,structural:false,impact:'סיכון מימון מחדש של חוב 2027.'}],
+   hist5y:{ evFcf:null, evEbitda:40, ps:2.5 } },
+];
+
+/* ---------- utilities ---------- */
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const mean = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : NaN;
+const median = a => { if (!a.length) return NaN; const s = [...a].sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const std = a => { if (a.length < 2) return NaN; const m = mean(a); return Math.sqrt(a.reduce((s, x) => s + (x - m) ** 2, 0) / (a.length - 1)); };
+const pct = (a, p) => { if (!a.length) return NaN; const s = [...a].sort((x, y) => x - y); const i = (s.length - 1) * p; const lo = Math.floor(i), hi = Math.ceil(i); return s[lo] + (s[hi] - s[lo]) * (i - lo); };
+function hashStr(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function gauss(r) { let u = 0, v = 0; while (!u) u = r(); while (!v) v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+function addDays(iso, n) { const d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+
+/* ---------- Layer 2: calculations (deterministic from raw) ---------- */
+function computeMetrics(c) {
+  const m = {};
+  m.mcap = c.price * c.shares;
+  m.totalDebt = c.stDebt + c.ltDebt;
+  m.cashAll = c.cash + c.stInv;
+  m.netDebt = m.totalDebt - m.cashAll;
+  m.ev = m.mcap + m.netDebt;
+  m.equity = c.totalAssets - c.totalLiab;
+  m.revenue = c.rev[c.rev.length - 1];
+  m.fcf = c.ocf - c.capex;
+  m.adjFcf = m.fcf - c.sbc;
+  m.currentRatio = c.curAssets / c.curLiab;
+  m.quickRatio = (c.cash + c.stInv + c.recv) / c.curLiab;
+  m.de = m.equity > 0 ? m.totalDebt / m.equity : Infinity;
+  m.ndEbitda = c.ebitda > 0 ? m.netDebt / c.ebitda : (m.netDebt <= 0 ? -Infinity : Infinity);
+  m.coverage = c.interest > 0 ? c.opIncome / c.interest : Infinity;
+  m.grossMargin = c.grossProfit / m.revenue;
+  m.opMargin = c.opIncome / m.revenue;
+  m.ebitdaMargin = c.ebitda / m.revenue;
+  m.netMargin = c.netIncome / m.revenue;
+  m.fcfMargin = m.fcf / m.revenue;
+  m.adjFcfMargin = m.adjFcf / m.revenue;
+  m.roic = c.opIncome * (1 - 0.21) / c.investedCapital;
+  const r = c.rev, n = r.length;
+  m.revGrowth1y = r[n - 1] / r[n - 2] - 1;
+  m.revCagr3y = Math.pow(r[n - 1] / r[n - 4], 1 / 3) - 1;
+  m.revCagr4y = Math.pow(r[n - 1] / r[0], 1 / 4) - 1;
+  m.yoy = r.slice(1).map((x, i) => x / r[i] - 1);
+  m.fcfYield = m.fcf / m.mcap;
+  m.adjFcfYield = m.adjFcf / m.mcap;
+  m.fcfGrowth = c.fcfPrev > 0 ? m.fcf / c.fcfPrev - 1 : (m.fcf > c.fcfPrev ? Infinity : -Infinity);
+  m.cashConversion = c.netIncome > 0 ? m.fcf / c.netIncome : NaN;
+  m.sbcPct = c.sbc / m.revenue;
+  m.dilutionRate = Math.pow(c.shares / c.shares3y, 1 / 3) - 1;
+  m.drawdown = 1 - c.price / c.high52;
+  m.burn = m.fcf < 0 ? -m.fcf : 0;
+  m.runwayYears = m.burn > 0 ? m.cashAll / m.burn : Infinity;
+  // multiples
+  m.pe = c.epsTTM > 0 ? c.price / c.epsTTM : NaN;
+  m.fpe = c.fwdEps > 0 ? c.price / c.fwdEps : NaN;
+  m.evRev = m.ev / m.revenue;
+  m.evEbitda = c.ebitda > 0 ? m.ev / c.ebitda : NaN;
+  m.evFcf = m.fcf > 0 ? m.ev / m.fcf : NaN;
+  m.pfcf = m.fcf > 0 ? m.mcap / m.fcf : NaN;
+  m.ps = m.mcap / m.revenue;
+  m.daysToEarnings = c.earnOffset;
+  m.earningsDate = addDays(SNAPSHOT_DATE, c.earnOffset);
+  return m;
+}
+
+/* ---------- Financial Health Score 0–100 ---------- */
+function healthScore(c, m) {
+  const comp = {};
+  // Balance sheet strength (20)
+  let bs;
+  if (m.netDebt <= 0) bs = 20;
+  else if (c.ebitda <= 0) bs = 0;
+  else bs = m.ndEbitda < 1 ? 16 : m.ndEbitda < 2 ? 12 : m.ndEbitda < 3 ? 8 : m.ndEbitda < 4 ? 4 : 0;
+  if (m.equity <= 0) bs = Math.min(bs, 4);
+  comp.balance = { pts: bs, max: 20, label: 'איתנות מאזן', basis: m.netDebt <= 0 ? 'מזומן נטו' : 'חוב נטו / EBITDA' };
+  // Liquidity (15)
+  const cr = m.currentRatio, liq = cr >= 2 ? 15 : cr >= 1.5 ? 12 : cr >= 1.2 ? 9 : cr >= 1 ? 6 : 2;
+  comp.liquidity = { pts: liq, max: 15, label: 'נזילות', basis: 'יחס שוטף' };
+  // Profitability (20)
+  const om = m.opMargin, pr = om > 0.25 ? 20 : om > 0.15 ? 16 : om > 0.05 ? 12 : om > 0 ? 8 : om > -0.1 ? 4 : 0;
+  comp.profit = { pts: pr, max: 20, label: 'רווחיות', basis: 'מרווח תפעולי' };
+  // Cash-flow quality (20) — after SBC
+  const am = m.adjFcfMargin, cf = am > 0.2 ? 20 : am > 0.1 ? 16 : am > 0.05 ? 12 : am > 0 ? 8 : am > -0.05 ? 4 : 0;
+  comp.cash = { pts: cf, max: 20, label: 'איכות תזרים', basis: 'מרווח FCF בניכוי SBC' };
+  // Revenue stability (10)
+  const minYoy = Math.min(...m.yoy);
+  let rs = minYoy > 0 ? 6 + (m.revCagr3y > 0.15 ? 4 : m.revCagr3y > 0.05 ? 2 : 0) : (m.revCagr3y > 0 ? 3 : 0);
+  comp.stability = { pts: rs, max: 10, label: 'יציבות הכנסות', basis: 'צמיחה שנתית ומינימום YoY' };
+  // Debt service (15)
+  let ds;
+  if (m.totalDebt === 0 || m.coverage === Infinity) ds = 15;
+  else if (c.opIncome <= 0) ds = m.runwayYears > 3 && m.cashAll > m.totalDebt ? 6 : 2;
+  else ds = m.coverage > 20 ? 15 : m.coverage > 10 ? 12 : m.coverage > 5 ? 9 : m.coverage > 2 ? 5 : 0;
+  comp.debt = { pts: ds, max: 15, label: 'יכולת פירעון', basis: 'כיסוי ריבית / runway' };
+  const score = Object.values(comp).reduce((s, x) => s + x.pts, 0);
+  // severe flags
+  const severe = [];
+  if (m.currentRatio < 1 && m.ndEbitda > 4) severe.push('נזילות נמוכה לצד מינוף גבוה');
+  if (m.coverage < 1.5 && m.totalDebt > 0) severe.push('כיסוי ריבית נמוך מ-1.5');
+  if (m.fcf < 0 && m.runwayYears < 2) severe.push('תזרים שלילי ו-runway קצר משנתיים');
+  const near = c.maturities.filter(x => x.y <= 2027).reduce((s, x) => s + x.a, 0);
+  if (near > m.cashAll + Math.max(m.fcf, 0)) severe.push('פירעונות חוב עד 2027 גבוהים מהמזומן והתזרים');
+  return { score, comp, severe, nearMaturities: near };
+}
+
+/* ---------- DCF (revenue-driven, 10y, 3 scenarios) ---------- */
+function defaultAssumptions(c, m) {
+  const g1 = clamp(m.revCagr3y * 0.85, -0.03, 0.35);
+  const wacc = clamp(0.085 + (c.sim.vol - 2) * 0.0075, 0.08, 0.125);
+  const m0 = m.adjFcfMargin;
+  const target = m0 > 0 ? clamp(m0 + 0.03, 0.08, 0.4) : 0.12;
+  return { g1, gT: 0.025, wacc, m0, mTarget: target, useAdj: true, years: 10 };
+}
+function dcfValue(c, m, a) {
+  const m0 = a.useAdj ? m.adjFcfMargin : m.fcfMargin;
+  let rev = m.revenue, pv = 0, fcf = 0; const rows = [];
+  for (let t = 1; t <= a.years; t++) {
+    const g = a.g1 + (a.gT - a.g1) * (t - 1) / (a.years - 1);
+    rev *= 1 + g;
+    const mt = t <= 5 ? m0 + (a.mTarget - m0) * t / 5 : a.mTarget;
+    fcf = rev * mt;
+    const df = Math.pow(1 + a.wacc, t);
+    pv += fcf / df; rows.push({ t, g, rev, margin: mt, fcf, pv: fcf / df });
+  }
+  if (a.wacc <= a.gT) return { perShare: NaN, rows, invalid: 'WACC ≤ צמיחה טרמינלית' };
+  const tv = fcf * (1 + a.gT) / (a.wacc - a.gT);
+  const pvTv = tv / Math.pow(1 + a.wacc, a.years);
+  const ev = pv + pvTv, equity = ev - m.netDebt;
+  return { ev, equity, perShare: equity / c.shares, pvTv, tvShare: pvTv / ev, rows };
+}
+function scenarios(a) {
+  return {
+    cons: { ...a, g1: a.g1 * 0.6, mTarget: a.mTarget - 0.03, wacc: a.wacc + 0.01 },
+    base: { ...a },
+    opt:  { ...a, g1: a.g1 * 1.25, mTarget: a.mTarget + 0.03, wacc: a.wacc - 0.0075 },
+  };
+}
+function valuation(c, m, a) {
+  const sc = scenarios(a);
+  const v = { cons: dcfValue(c, m, sc.cons), base: dcfValue(c, m, sc.base), opt: dcfValue(c, m, sc.opt), sc };
+  v.low = v.cons.perShare; v.mid = v.base.perShare; v.high = v.opt.perShare;
+  v.mos = (v.mid - c.price) / v.mid;
+  v.upside = v.mid / c.price - 1;
+  v.downsideCons = v.low / c.price - 1;
+  v.reliable = m.adjFcfMargin > 0 && v.base.tvShare < 0.8;
+  v.reliabilityNote = m.adjFcfMargin <= 0 ? 'תזרים מתואם שלילי — הערכת ה-DCF נשענת על הנחת מרווח יעד ולכן אמינותה נמוכה.'
+    : v.base.tvShare >= 0.8 ? 'מעל 80% מהשווי נובע מהערך הטרמינלי — רגישות גבוהה מאוד להנחות.' : 'השווי רגיש להנחות; ראה טבלת רגישות.';
+  // sensitivity grid
+  v.grid = { waccs: [-0.02, -0.01, 0, 0.01, 0.02].map(d => a.wacc + d), gts: [0.015, 0.02, 0.025, 0.03, 0.035] };
+  v.grid.cells = v.grid.waccs.map(w => v.grid.gts.map(g => dcfValue(c, m, { ...a, wacc: w, gT: g }).perShare));
+  // relative
+  const peer = SECTOR_MEDIANS[c.sector], keys = ['pe', 'fpe', 'evRev', 'evEbitda', 'evFcf', 'pfcf', 'ps'];
+  v.rel = keys.map(k => ({ k, own: m[k], peer: peer[k], disc: isFinite(m[k]) && m[k] > 0 ? 1 - m[k] / peer[k] : NaN }));
+  const hk = [['evFcf', 'evFcf'], ['evEbitda', 'evEbitda'], ['ps', 'ps']];
+  v.hist = hk.map(([k, hkey]) => ({ k, own: m[k], hist: c.hist5y[hkey], disc: isFinite(m[k]) && m[k] > 0 && c.hist5y[hkey] ? 1 - m[k] / c.hist5y[hkey] : NaN }));
+  const relD = mean(v.rel.filter(x => ['evRev', 'evEbitda', 'evFcf'].includes(x.k) && isFinite(x.disc)).map(x => x.disc));
+  const histD = mean(v.hist.filter(x => isFinite(x.disc)).map(x => x.disc));
+  v.relDisc = relD; v.histDisc = histD;
+  // score — low multiple alone ≠ undervalued
+  const s1 = isFinite(v.mos) ? clamp(50 + v.mos * 150, 0, 100) : 30;
+  const damp = (m.revGrowth1y < 0.03 || c.news.some(n => n.structural && n.sev >= 3)) ? 0.5 : 1;
+  const s2 = isFinite(relD) ? clamp(50 + relD * 100 * damp, 0, 100) : 50;
+  const s3 = isFinite(histD) ? clamp(50 + histD * 100 * damp, 0, 100) : 50;
+  v.score = Math.round(0.5 * s1 + 0.25 * s2 + 0.25 * s3);
+  v.parts = { s1, s2, s3, damp };
+  return v;
+}
+
+/* ---------- Synthetic event price paths (DEMO) ---------- */
+// path[i] = index price at day (i - 31), i.e. day -31..+20. Day 0 = first session reflecting results.
+function eventPaths(c) {
+  const r = rng(hashStr(c.id + 'evt'));
+  const n = c.hist.eps.length, out = [];
+  for (let e = 0; e < n; e++) {
+    let p = 100; const path = [p]; let react = 0;
+    for (let d = -30; d <= 20; d++) {
+      let ret;
+      const dv = c.sim.vol / 100;
+      if (d < 0) ret = c.sim.pre / 100 / 30 + dv * gauss(r);
+      else if (d === 0) { react = c.sim.k * c.hist.eps[e] / 100 * 1.0 + c.sim.noise / 100 * gauss(r) * 0.8; ret = react; }
+      else ret = Math.sign(react) * c.sim.post / 100 / 20 + dv * gauss(r);
+      p *= 1 + ret; path.push(p);
+    }
+    out.push({ q: e, path, react });
+  }
+  return out; // oldest -> newest
+}
+const IDX = d => d + 31;
+
+function stats(rets, paths) {
+  const n = rets.length;
+  if (!n) return { n: 0 };
+  const s = { n, avg: mean(rets), med: median(rets), win: rets.filter(x => x > 0).length / n, vol: std(rets), p10: pct(rets, 0.1), maxDD: Math.min(...paths) };
+  s.riskAdj = s.vol > 0 ? s.avg / s.vol : NaN;
+  s.t = s.vol > 0 ? s.avg / (s.vol / Math.sqrt(n)) : NaN;
+  s.conf = n < 8 ? 'אין מספיק נתונים' : Math.abs(s.t) >= 2.5 ? 'בינונית' : Math.abs(s.t) >= 1.5 ? 'נמוכה–בינונית' : 'נמוכה';
+  return s;
+}
+function trade(path, entryDay, exitDay, costBps) {
+  const e = path[IDX(entryDay)], seg = path.slice(IDX(entryDay), IDX(exitDay) + 1);
+  let peak = e, dd = 0; for (const p of seg) { peak = Math.max(peak, p); dd = Math.min(dd, p / peak - 1); }
+  return { ret: seg[seg.length - 1] / e - 1 - 2 * costBps / 10000, dd };
+}
+function timingAnalysis(c, costBps) {
+  const ev = eventPaths(c);
+  const run = (entry, exit, cond) => {
+    const sel = ev.filter(x => !cond || cond(x)); const tr = sel.map(x => trade(x.path, entry, exit, costBps));
+    return stats(tr.map(t => t.ret), tr.map(t => t.dd));
+  };
+  const A = [30, 21, 14, 7].map(k => ({ label: `כניסה ${k} ימים לפני → יציאה יום לפני הדוח`, hold: k - 1, ...run(-k, -1) }));
+  const B = [];
+  for (const k of [14, 7]) for (const x of [0, 1, 3]) B.push({ label: `כניסה ${k} ימים לפני → יציאה ${x === 0 ? 'ביום הדוח' : x + ' ימים אחרי'}`, hold: k + x, ...run(-k, x) });
+  const C = [5, 10, 20].map(x => ({ label: `כניסה יום 1 אחרי תגובה חיובית → יציאה ${x} ימים אחרי`, hold: x - 1, ...run(1, x, e => e.react > 0) }));
+  // average path for chart
+  const days = []; for (let d = -30; d <= 20; d++) days.push(d);
+  const avgPath = days.map(d => mean(ev.map(e => (e.path[IDX(d)] / e.path[IDX(-30)] - 1) * 100)));
+  const sdPath = days.map(d => std(ev.map(e => (e.path[IDX(d)] / e.path[IDX(-30)] - 1) * 100)));
+  const reactions = ev.map(e => e.react);
+  return { A, B, C, days, avgPath, sdPath, reactions, n: ev.length, events: ev };
+}
+
+/* ---------- Earnings Opportunity Score ---------- */
+function earningsScore(c, m, v, t) {
+  const eps = c.hist.eps, n = eps.length;
+  const beat = eps.filter(x => x > 0).length / n;
+  const avgS = mean(eps);
+  const posReact = t.reactions.filter(x => x > 0).length / t.reactions.length;
+  const parts = {
+    beat: { pts: 25 * beat, max: 25, label: 'שיעור עקיפת תחזיות EPS' },
+    surprise: { pts: 10 * clamp(avgS / 10, 0, 1), max: 10, label: 'גודל הפתעה ממוצע' },
+    revisions: { pts: 20 * clamp((c.rev90 + 5) / 10, 0, 1), max: 20, label: 'כיוון עדכוני אנליסטים (90 יום)' },
+    guidance: { pts: c.guidance === 'raised' ? 10 : c.guidance === 'maintained' ? 5 : 0, max: 10, label: 'תחזית הנהלה' },
+    priced: { pts: c.ret3m <= 0 ? 15 : 15 * (1 - clamp(c.ret3m / 15, 0, 1)), max: 15, label: 'ציפיות שעוד לא תומחרו (מומנטום 3ח׳)' },
+    react: { pts: 10 * posReact, max: 10, label: 'תגובות מחיר היסטוריות' },
+    rerate: { pts: isFinite(v.mos) && v.mos > 0 ? 10 * clamp(v.mos / 0.3, 0, 1) : 0, max: 10, label: 'פוטנציאל הערכה מחודשת' },
+  };
+  const score = Math.round(Object.values(parts).reduce((s, x) => s + x.pts, 0));
+  return { score, parts, beat, avgS, posReact, n, partial: n < 8 };
+}
+
+/* ---------- Risk Score (higher = riskier) + override ---------- */
+function riskScore(c, m, h) {
+  const items = [];
+  const sevPts = { 1: 3, 2: 8, 3: 15, 4: 35 }, stW = { 'מאומת': 1, 'טענה': 0.7, 'ספקולטיבי': 0.4 };
+  for (const n of c.news) { const p = sevPts[n.sev] * stW[n.status] * (n.known ? 1 : 1.2); items.push({ src: n.title, pts: p }); }
+  if (m.dilutionRate > 0.05) items.push({ src: 'דילול שנתי >5%', pts: 15 }); else if (m.dilutionRate > 0.02) items.push({ src: 'דילול שנתי 2–5%', pts: 8 }); else if (m.dilutionRate > 0) items.push({ src: 'דילול שנתי חיובי', pts: 3 });
+  if (c.dilution.atm) items.push({ src: 'תוכנית ATM פעילה', pts: 8 });
+  if (c.dilution.shelf) items.push({ src: 'Shelf registration קיים', pts: 3 });
+  const unusual = c.insiders.filter(i => i.type === 'sell' && i.plan === 'open' && i.val >= 5);
+  if (unusual.length) items.push({ src: 'מכירות חריגות של בעלי עניין מחוץ לתוכנית', pts: 8 });
+  items.push({ src: 'פער באיתנות פיננסית', pts: (100 - h.score) * 0.25 });
+  if (c.sim.vol > 3.5) items.push({ src: 'תנודתיות גבוהה', pts: 8 }); else if (c.sim.vol > 2.5) items.push({ src: 'תנודתיות בינונית-גבוהה', pts: 4 });
+  if (h.severe.length) items.push({ src: 'סיכון פיננסי חמור', pts: 15 });
+  const score = Math.round(clamp(items.reduce((s, x) => s + x.pts, 0), 0, 100));
+  let override = null;
+  const crit = c.news.find(n => n.sev === 4 && n.status === 'מאומת');
+  if (crit) override = { level: 'disqualify', reason: `Risk Override: ${crit.title}` };
+  else if (score > 70) override = { level: 'disqualify', reason: 'Risk Override: ציון סיכון מעל 70' };
+  else if (h.severe.length) override = { level: 'cap', reason: 'Risk Override: ' + h.severe[0] };
+  else { const s3 = c.news.find(n => n.sev >= 3 && !n.known); if (s3) override = { level: 'cap', reason: `Risk Override: אירוע חדש בחומרה גבוהה — ${s3.title}` }; }
+  return { score, items, override, unusual };
+}
+
+/* ---------- Fallen Angels ---------- */
+function fallenAngel(c, m, h, v) {
+  const dd = m.drawdown, opChg = m.opMargin - c.opMarginPrev;
+  const structural = c.news.some(n => n.structural && n.sev >= 3);
+  const multComp = isFinite(v.histDisc) ? v.histDisc : NaN;
+  let cls, why = [];
+  if (dd < 0.2) { cls = 'לא רלוונטי'; why.push('ירידה של פחות מ-20% מהשיא השנתי'); }
+  else if (h.score >= 60 && m.revGrowth1y >= 0.05 && m.fcfGrowth > 0 && !structural && opChg > -0.03) { cls = 'Undervalued Quality'; why.push('העסק ממשיך לצמוח ולהגדיל תזרים בזמן שהמניה ירדה'); }
+  else if (m.revGrowth1y < 0.03 || opChg < -0.03 || structural || h.score < 50) {
+    cls = 'Value Trap Risk';
+    if (m.revGrowth1y < 0.03) why.push('צמיחת הכנסות כמעט אפסית/שלילית');
+    if (opChg < -0.03) why.push('שחיקה במרווח התפעולי');
+    if (structural) why.push('סימנים לפגיעה מבנית (תחרות/AI/מודל עסקי)');
+    if (h.score < 50) why.push('איתנות פיננסית חלשה');
+  } else { cls = 'לא חד-משמעי'; why.push('ירידה משמעותית, אך הנתונים העסקיים מעורבים'); }
+  const gap = m.revGrowth1y * 100 - c.ret1y; // business vs stock performance gap (pp)
+  return { cls, why, dd, opChg, multComp, gap, structural };
+}
+
+/* ---------- Recent price series + technicals (Module 8) ---------- */
+function recentSeries(c) {
+  const r = rng(hashStr(c.id + 'px')), N = 130, dv = c.sim.vol / 100;
+  const jumpIdx = c.earnOffset < 0 ? N - 1 + c.earnOffset : -1;
+  let p = 100; const raw = [];
+  for (let i = 0; i < N; i++) {
+    let ret = dv * gauss(r) + (c.ret3m / 100) / 63 * (i > N - 64 ? 1 : 0.3);
+    if (i === jumpIdx) ret = c.lastReact / 100;
+    const o = p; p *= 1 + ret;
+    const hi = Math.max(o, p) * (1 + Math.abs(gauss(r)) * dv * 0.5), lo = Math.min(o, p) * (1 - Math.abs(gauss(r)) * dv * 0.5);
+    const vol = (1 + 0.3 * Math.abs(gauss(r))) * (i === jumpIdx ? 3.5 : i > jumpIdx && jumpIdx > 0 && i < jumpIdx + 4 ? 1.8 : 1);
+    raw.push({ o, h: hi, l: lo, c: p, v: vol });
+  }
+  const k = c.price / raw[N - 1].c;
+  const s = raw.map((x, i) => ({ i, o: x.o * k, h: x.h * k, l: x.l * k, c: x.c * k, v: x.v }));
+  return { s, jumpIdx };
+}
+function sma(a, n) { return a.map((_, i) => i < n - 1 ? null : mean(a.slice(i - n + 1, i + 1))); }
+function rsi(a, n = 14) {
+  const out = Array(a.length).fill(null); let g = 0, l = 0;
+  for (let i = 1; i <= n; i++) { const d = a[i] - a[i - 1]; if (d > 0) g += d; else l -= d; }
+  g /= n; l /= n; out[n] = 100 - 100 / (1 + g / (l || 1e-9));
+  for (let i = n + 1; i < a.length; i++) { const d = a[i] - a[i - 1]; g = (g * (n - 1) + Math.max(d, 0)) / n; l = (l * (n - 1) + Math.max(-d, 0)) / n; out[i] = 100 - 100 / (1 + g / (l || 1e-9)); }
+  return out;
+}
+function atr(s, n = 14) {
+  const tr = s.map((x, i) => i === 0 ? x.h - x.l : Math.max(x.h - x.l, Math.abs(x.h - s[i - 1].c), Math.abs(x.l - s[i - 1].c)));
+  const out = Array(s.length).fill(null); let a = mean(tr.slice(1, n + 1)); out[n] = a;
+  for (let i = n + 1; i < s.length; i++) { a = (a * (n - 1) + tr[i]) / n; out[i] = a; }
+  return out;
+}
+function momentumMonitor(c, m, v, all) {
+  const { s, jumpIdx } = recentSeries(c), cl = s.map(x => x.c), N = cl.length;
+  const s20 = sma(cl, 20), s50 = sma(cl, 50), r = rsi(cl), a = atr(s);
+  const last = N - 1, ret20 = cl[last] / cl[last - 20] - 1;
+  const univ20 = mean(all.map(x => { const q = recentSeries(x.c).s; return q[N - 1].c / q[N - 21].c - 1; }));
+  const atrPct = a[last] / cl[last], atrAvg = mean(a.slice(last - 60, last - 5).filter(x => x)) / mean(cl.slice(last - 60, last - 5));
+  const volRatio = mean(s.slice(-5).map(x => x.v)) / mean(s.slice(-60, -5).map(x => x.v));
+  const alerts = [];
+  const rsiMax10 = Math.max(...r.slice(last - 10, last).filter(x => x != null));
+  if (cl[last] < s20[last] && r[last] < 50 && rsiMax10 > 60) alerts.push({ k: 'Momentum Weakening', he: 'היחלשות מומנטום', d: `מחיר מתחת לממוצע 20 יום ו-RSI ירד ל-${r[last].toFixed(0)} אחרי שיא ${rsiMax10.toFixed(0)}` });
+  if (isFinite(v.mid) && c.price >= 0.9 * v.mid) alerts.push({ k: 'Valuation Gap Closing', he: 'פער השווי נסגר', d: `המחיר ${c.price.toFixed(1)} קרוב/מעל ${(0.9 * v.mid).toFixed(1)} (90% משווי הבסיס)` });
+  if (c.guidance === 'lowered' || c.rev90 < 0) alerts.push({ k: 'Negative Guidance Revision', he: 'עדכון תחזיות שלילי', d: `תחזית הנהלה: ${c.guidance === 'lowered' ? 'הורדה' : 'ללא שינוי'}; עדכוני EPS ב-90 יום: ${c.rev90}%` });
+  if (atrPct > 1.5 * atrAvg) alerts.push({ k: 'Elevated Volatility', he: 'תנודתיות מוגברת', d: `ATR ${(atrPct * 100).toFixed(1)}% לעומת ממוצע ${(atrAvg * 100).toFixed(1)}%` });
+  const up = isFinite(v.mid) ? v.mid - c.price : NaN, dn = c.price - (s50[last] || c.price);
+  if (isFinite(up) && dn > 0 && up / dn < 1) alerts.push({ k: 'Risk/Reward Deterioration', he: 'הרעה ביחס סיכוי/סיכון', d: `מרחק לשווי הבסיס ${up.toFixed(1)}$ לעומת מרחק לממוצע 50 יום ${dn.toFixed(1)}$` });
+  return { s, s20, s50, rsi: r, atr: a, ret20, rs: ret20 - univ20, atrPct, volRatio, alerts, jumpIdx };
+}
+
+/* ---------- Final assessment ---------- */
+const CLASSES = ['עדיפות גבוהה למחקר', 'מועמדת למעקב', 'הזדמנות לא ודאית', 'סיכון גבוה / לא עומדת בתנאי הסינון'];
+function finalAssessment(h, v, e, r, f) {
+  const composite = Math.round(0.35 * h.score + 0.35 * v.score + 0.2 * e.score + 0.1 * (100 - r.score));
+  let idx;
+  if ((r.override && r.override.level === 'disqualify') || h.score < 45) idx = 3;
+  else if (composite >= 65 && v.mos >= 0.15 && r.score < 50) idx = 0;
+  else if (composite >= 55 && v.score >= 40) idx = 1;
+  else idx = 2;
+  let capReason = null;
+  if (idx < 1 && r.override && r.override.level === 'cap') capReason = r.override.reason;
+  else if (idx < 1 && f && f.cls === 'Value Trap Risk') capReason = 'סימני Value Trap — נדרש אימות שהפגיעה אינה מבנית';
+  if (capReason) idx = 1;
+  return { composite, idx, cls: CLASSES[idx], capped: !!capReason, capReason };
+}
+
+/* ---------- Pipeline ---------- */
+function analyzeAll(assumptionsById = {}, costBps = 15) {
+  const raw = DemoProvider.universe();
+  const base = raw.map(c => ({ c, m: computeMetrics(c) }));
+  return base.map(({ c, m }) => {
+    const h = healthScore(c, m);
+    const a = assumptionsById[c.id] || defaultAssumptions(c, m);
+    const v = valuation(c, m, a);
+    const t = timingAnalysis(c, costBps);
+    const e = earningsScore(c, m, v, t);
+    const r = riskScore(c, m, h);
+    const f = fallenAngel(c, m, h, v);
+    const fin = finalAssessment(h, v, e, r, f);
+    return { c, m, h, a, v, t, e, r, f, fin };
+  }).map((x, _, all) => { x.mon = momentumMonitor(x.c, x.m, x.v, all); return x; });
+}
+
+/* ---------- Walk-forward validation (point-in-time) ---------- */
+function walkForward(all, costBps = 15) {
+  // Rule: hold Strategy B (enter -7, exit +1) only if the company beat EPS in ≥60% of PRIOR quarters (min 4 prior).
+  const recs = [];
+  for (const x of all) {
+    const ev = x.t.events, eps = x.c.hist.eps;
+    for (let i = 4; i < ev.length; i++) {
+      const prior = eps.slice(0, i), br = prior.filter(z => z > 0).length / prior.length;
+      const tr = trade(ev[i].path, -7, 1, costBps);
+      recs.push({ id: x.c.id, sector: x.c.sector, cap: x.m.mcap >= 20000 ? 'Large' : x.m.mcap >= 5000 ? 'Mid' : 'Small', vol: x.c.sim.vol > 3 ? 'גבוהה' : 'רגילה', i, oos: i >= 6, signal: br >= 0.6, ret: tr.ret });
+    }
+  }
+  const summarize = rs => { const sig = rs.filter(r => r.signal).map(r => r.ret), allR = rs.map(r => r.ret); return { nSig: sig.length, nAll: allR.length, sig: mean(sig), base: mean(allR), edge: mean(sig) - mean(allR), t: sig.length > 2 ? (mean(sig) - mean(allR)) / (std(sig) / Math.sqrt(sig.length)) : NaN }; };
+  const groups = key => { const g = {}; for (const r of recs) (g[r[key]] = g[r[key]] || []).push(r); return Object.entries(g).map(([k, rs]) => ({ k, ...summarize(rs) })); };
+  return { ins: summarize(recs.filter(r => !r.oos)), oos: summarize(recs.filter(r => r.oos)), bySector: groups('sector'), byCap: groups('cap'), byVol: groups('vol'), n: recs.length };
+}
+
+if (typeof module !== 'undefined' && typeof window === 'undefined') module.exports = { analyzeAll, walkForward, RAW_COMPANIES, CLASSES, dcfValue };
+</script>
+<script>/* ===================== UI LAYER ===================== */
+const COLORS = { s1: '#3987e5', s2: '#d95926', s3: '#199e70', good: '#0ca30c', warn: '#fab219', serious: '#ec835a', crit: '#d03b3b', grid: '#2a2b2e', ink2: '#a9a8a0', ink: '#ecebe6' };
+const S = {
+  view: 'scanner', sel: 'PYLN', assumptions: {}, costBps: 15,
+  filters: { dmin: 7, dmax: 30, sectors: new Set(), minHealth: 0, includeReported: false, q: '' },
+  sort: { key: 'final', dir: 1 }, watch: {}, lastScan: null, data: [], flagFilter: 'all',
+};
+try { S.watch = JSON.parse(localStorage.getItem('evi_watch') || '{}'); } catch (e) { S.watch = {}; }
+const saveWatch = () => { try { localStorage.setItem('evi_watch', JSON.stringify(S.watch)); } catch (e) {} };
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+const fM = x => !isFinite(x) ? '—' : (x < 0 ? '−' : '') + (Math.abs(x) >= 1000 ? `$${(Math.abs(x) / 1000).toFixed(2)}B` : `$${Math.abs(x).toFixed(0)}M`);
+const fP = (x, d = 1) => !isFinite(x) ? '—' : `${(x * 100).toFixed(d)}%`;
+const fPs = (x, d = 1) => !isFinite(x) ? '—' : `${x > 0 ? '+' : ''}${(x * 100).toFixed(d)}%`;
+const fX = x => !isFinite(x) || x <= 0 ? '—' : `${x.toFixed(1)}x`;
+const f$ = x => !isFinite(x) ? '—' : `$${x.toFixed(2)}`;
+const fN = (x, d = 2) => x === Infinity ? '∞' : x === -Infinity ? '−∞' : !isFinite(x) ? '—' : x.toFixed(d);
+const num = h => `<span class="num">${h}</span>`;
+const SRC = (layer = 'RAW') => `<span class="lyr lyr-${layer}" title="שכבה: ${layer} · מקור: ${DEMO_SOURCE} · עודכן: ${SNAPSHOT_DATE}">${layer}</span>`;
+const byId = id => S.data.find(x => x.c.id === id);
+
+function band(score, invert = false) {
+  const s = invert ? 100 - score : score;
+  return s >= 70 ? ['good', 'חזק'] : s >= 50 ? ['warn', 'בינוני'] : s >= 35 ? ['serious', 'חלש'] : ['crit', 'חלש מאוד'];
+}
+function scoreCell(v, invert = false) {
+  const [b, lbl] = band(v, invert);
+  return `<span class="score sc-${b}" title="${lbl}"><i style="--w:${v}%"></i><b class="num">${Math.round(v)}</b></span>`;
+}
+const CLS_CLASS = ['cls0', 'cls1', 'cls2', 'cls3'];
+const clsBadge = fin => `<span class="cls ${CLS_CLASS[fin.idx]}">${fin.cls}${fin.capped ? ' ⤓' : ''}</span>`;
+const dateBadge = c => c.confirmed ? '<span class="tag tag-ok">מאושר</span>' : '<span class="tag tag-est">משוער</span>';
+
+function recompute() { S.data = analyzeAll(S.assumptions, S.costBps); S.lastScan = new Date(); }
+
+/* ---------- charts ---------- */
+const charts = {};
+function chart(id, cfg) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+  const el = document.getElementById(id); if (!el || typeof Chart === 'undefined') return;
+  charts[id] = new Chart(el, cfg);
+}
+function baseOpts(extra = {}) {
+  return Object.assign({
+    responsive: true, maintainAspectRatio: false, animation: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { labels: { color: COLORS.ink2, boxWidth: 10, font: { family: 'Heebo' } } }, tooltip: { rtl: true, textDirection: 'rtl', backgroundColor: '#0d0e10', borderColor: '#3a3b3f', borderWidth: 1, titleFont: { family: 'Heebo' }, bodyFont: { family: 'Heebo' } } },
+    scales: { x: { ticks: { color: COLORS.ink2 }, grid: { color: COLORS.grid } }, y: { ticks: { color: COLORS.ink2 }, grid: { color: COLORS.grid } } },
+  }, extra);
+}
+
+/* ---------- navigation ---------- */
+const VIEWS = [
+  ['scanner', 'Market Scanner', 'סורק שוק'], ['quality', 'Financial Quality', 'איכות פיננסית'], ['value', 'Undervalued Stocks', 'תמחור חסר'],
+  ['earnings', 'Upcoming Earnings', 'דוחות קרובים'], ['risk', 'Risk Intelligence', 'מודיעין סיכונים'], ['timing', 'Entry & Exit', 'חלונות כניסה ויציאה'],
+  ['watch', 'Watchlist', 'רשימת מעקב'], ['report', 'Company Report', 'דוח מחקר'], ['validation', 'Model Validation', 'אימות מודלים'], ['method', 'Data & Methodology', 'נתונים ומתודולוגיה'],
+];
+function nav() {
+  $('#nav').innerHTML = VIEWS.map(([k, en, he]) => `<a href="#${k}" class="${S.view === k ? 'on' : ''}"><span>${he}</span><small>${en}</small></a>`).join('');
+}
+function route() {
+  const h = location.hash.replace('#', '');
+  const [v, id] = h.split('-');
+  S.view = VIEWS.some(x => x[0] === v) ? v : 'scanner';
+  if (id && byId(id.toUpperCase())) S.sel = id.toUpperCase();
+  render();
+}
+function go(view, id) { if (id) S.sel = id; location.hash = view + (id && ['report', 'timing'].includes(view) ? '-' + id.toLowerCase() : ''); if (location.hash.replace('#', '') === view) render(); }
+function companySelect(onchange = 'selCompany(this.value)') {
+  return `<select class="inp" onchange="${onchange}">${S.data.map(x => `<option value="${x.c.id}" ${x.c.id === S.sel ? 'selected' : ''}>${x.c.name} (${x.c.ticker})</option>`).join('')}</select>`;
+}
+function selCompany(id) { S.sel = id; if (['report', 'timing'].includes(S.view)) location.hash = S.view + '-' + id.toLowerCase(); else render(); }
+function toggleWatch(id, ev) {
+  if (ev) ev.stopPropagation();
+  const x = byId(id);
+  if (S.watch[id]) delete S.watch[id];
+  else S.watch[id] = { added: new Date().toISOString(), snap: { h: x.h.score, v: x.v.score, e: x.e.score, r: x.r.score, idx: x.fin.idx, price: x.c.price } };
+  saveWatch(); render();
+}
+const star = id => `<button class="star ${S.watch[id] ? 'on' : ''}" title="${S.watch[id] ? 'הסר מרשימת המעקב' : 'הוסף לרשימת המעקב'}" onclick="toggleWatch('${id}',event)">${S.watch[id] ? '★' : '☆'}</button>`;
+
+/* ---------- render ---------- */
+function render() {
+  nav();
+  Object.keys(charts).forEach(k => { charts[k].destroy(); delete charts[k]; });
+  const fn = { scanner: vScanner, quality: vQuality, value: vValue, earnings: vEarnings, risk: vRisk, timing: vTiming, watch: vWatch, report: vReport, validation: vValidation, method: vMethod }[S.view];
+  $('#main').innerHTML = fn();
+  (fn.after || (() => {}))();
+  $('#scanTime').textContent = S.lastScan ? S.lastScan.toLocaleTimeString('he-IL') : '';
+  window.scrollTo(0, 0);
+}
+function panel(title, body, sub = '') { return `<section class="panel"><header><h2>${title}</h2>${sub ? `<span class="sub">${sub}</span>` : ''}</header>${body}</section>`; }
+function sortable(cols, rows, tableId) {
+  const head = cols.map(c => `<th class="${c.num ? 'n' : ''} ${c.sort ? 'sortable' : ''}" ${c.sort ? `onclick="setSort('${c.sort}')"` : ''}>${c.h}${S.sort.key === c.sort ? (S.sort.dir > 0 ? ' ▾' : ' ▴') : ''}</th>`).join('');
+  return `<div class="tw"><table id="${tableId || ''}"><thead><tr>${head}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+}
+function setSort(k) { S.sort = { key: k, dir: S.sort.key === k ? -S.sort.dir : 1 }; render(); }
+const SORTERS = {
+  name: x => x.c.name, price: x => x.c.price, mcap: x => x.m.mcap, ev: x => x.m.ev, days: x => x.c.earnOffset, rev: x => x.m.revenue, ni: x => x.c.netIncome, fcf: x => x.m.fcf,
+  h: x => -x.h.score, v: x => -x.v.score, e: x => -x.e.score, r: x => x.r.score, final: x => x.fin.idx * 1000 - x.fin.composite, mos: x => -x.v.upside, dd: x => -x.f.dd,
+};
+function sorted(arr) { const f = SORTERS[S.sort.key] || SORTERS.final; return [...arr].sort((a, b) => { const A = f(a), B = f(b); return (A > B ? 1 : A < B ? -1 : 0) * S.sort.dir; }); }
+
+/* ===== 1. MARKET SCANNER ===== */
+function filtered() {
+  const F = S.filters;
+  return S.data.filter(x => {
+    const d = x.c.earnOffset;
+    const inWin = (d >= F.dmin && d <= F.dmax) || (F.includeReported && d < 0);
+    if (!inWin) return false;
+    if (F.sectors.size && !F.sectors.has(x.c.sector)) return false;
+    if (x.h.score < F.minHealth) return false;
+    if (F.q && !(x.c.name + x.c.ticker).toLowerCase().includes(F.q.toLowerCase())) return false;
+    return true;
+  });
+}
+function setF(k, v) { S.filters[k] = v; render(); }
+function toggleSector(s) { S.filters.sectors.has(s) ? S.filters.sectors.delete(s) : S.filters.sectors.add(s); render(); }
+function vScanner() {
+  const F = S.filters, list = sorted(filtered());
+  const sectors = Object.keys(SECTOR_MEDIANS);
+  const ctrl = `<div class="filters">
+    <label>חלון דוחות: <input class="inp sm" type="number" min="0" max="90" value="${F.dmin}" onchange="setF('dmin',+this.value)"> עד <input class="inp sm" type="number" min="1" max="120" value="${F.dmax}" onchange="setF('dmax',+this.value)"> ימים</label>
+    <label>ציון בריאות מינ׳: <input class="inp sm" type="number" min="0" max="100" value="${F.minHealth}" onchange="setF('minHealth',+this.value)"></label>
+    <label><input type="checkbox" ${F.includeReported ? 'checked' : ''} onchange="setF('includeReported',this.checked)"> כלול חברות שדיווחו לאחרונה</label>
+    <input class="inp" placeholder="חיפוש שם / טיקר" value="${esc(F.q)}" onchange="setF('q',this.value)">
+    <button class="btn exp" onclick="exportScanner()">ייצוא ל-Excel</button>
+    <div class="chips">${sectors.map(s => `<button class="chip ${F.sectors.has(s) ? 'on' : ''}" onclick="toggleSector('${s}')">${s}</button>`).join('')}</div>
+  </div>`;
+  const cols = [{ h: '' }, { h: 'Company', sort: 'name' }, { h: 'Ticker' }, { h: 'מחיר', num: 1, sort: 'price' }, { h: 'שווי שוק', num: 1, sort: 'mcap' }, { h: 'EV', num: 1, sort: 'ev' },
+    { h: 'דוח הבא', sort: 'days' }, { h: 'ימים', num: 1, sort: 'days' }, { h: 'הכנסות שנתיות', num: 1, sort: 'rev' }, { h: 'רווח נקי', num: 1, sort: 'ni' }, { h: 'FCF', num: 1, sort: 'fcf' },
+    { h: 'בריאות', sort: 'h' }, { h: 'תמחור', sort: 'v' }, { h: 'הזדמנות דוח', sort: 'e' }, { h: 'סיכון', sort: 'r' }, { h: 'הערכה', sort: 'final' }, { h: 'מקור / עדכון' }];
+  const rows = list.map(x => `<tr class="click" onclick="go('report','${x.c.id}')">
+    <td>${star(x.c.id)}</td><td class="en">${x.c.name}</td><td class="en tk">${x.c.ticker}</td><td class="n">${num(f$(x.c.price))}</td><td class="n">${num(fM(x.m.mcap))}</td><td class="n">${num(fM(x.m.ev))}</td>
+    <td>${num(x.m.earningsDate)} ${dateBadge(x.c)}</td><td class="n">${num(x.c.earnOffset)}</td><td class="n">${num(fM(x.m.revenue))}</td><td class="n ${x.c.netIncome < 0 ? 'neg' : ''}">${num(fM(x.c.netIncome))}</td><td class="n ${x.m.fcf < 0 ? 'neg' : ''}">${num(fM(x.m.fcf))}</td>
+    <td>${scoreCell(x.h.score)}${x.h.severe.length ? ' <span class="sev4" title="' + esc(x.h.severe.join(' · ')) + '">⚠</span>' : ''}</td><td>${scoreCell(x.v.score)}</td><td>${scoreCell(x.e.score)}</td><td>${scoreCell(x.r.score, true)}</td><td>${clsBadge(x.fin)}</td>
+    <td class="srccell">${SRC('RAW')}${SRC('CALC')}${SRC('MODEL')}<small>${SNAPSHOT_DATE}</small></td></tr>`);
+  const empty = list.length ? '' : `<div class="empty">אין חברות בחלון ${F.dmin}–${F.dmax} ימים עם המסננים שנבחרו.</div>`;
+  const hidden = S.data.length - list.length;
+  return `<div class="grid2">${panel('סורק שוק — NASDAQ / NYSE', ctrl + sortable(cols, rows) + empty + `<p class="note">מוצגות ${list.length} חברות מתוך ${S.data.length} ביקום ההדגמה (${hidden} מחוץ לחלון/מסננים). לחיצה על שורה פותחת דוח מחקר. ⤓ = דירוג הוגבל ע"י Risk Override / Value Trap.</p>`)}
+    ${panel('איכות מול תמחור', '<div class="ch" style="height:340px"><canvas id="cScatter"></canvas></div><p class="note">ציר X: ציון תמחור · ציר Y: ציון בריאות פיננסית. ריבוע ימני-עליון = איכות במחיר אטרקטיבי. כל החברות ביקום ההדגמה מוצגות.</p>', 'לפי סדר העדיפויות: איכות ותמחור לפני ספקולציית דוח')}</div>`;
+}
+vScanner.after = () => {
+  chart('cScatter', { type: 'scatter', data: { datasets: [{ label: 'חברות (DEMO)', data: S.data.map(x => ({ x: x.v.score, y: x.h.score, id: x.c.ticker })), backgroundColor: COLORS.s1, borderColor: '#111214', borderWidth: 2, pointRadius: 6, pointHoverRadius: 8 }] },
+    options: baseOpts({ interaction: { mode: 'nearest', intersect: true }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.raw.id}: תמחור ${c.raw.x} · בריאות ${c.raw.y}` } } },
+      scales: { x: { min: 0, max: 100, title: { display: true, text: 'ציון תמחור', color: COLORS.ink2 }, ticks: { color: COLORS.ink2 }, grid: { color: COLORS.grid } }, y: { min: 0, max: 100, title: { display: true, text: 'ציון בריאות', color: COLORS.ink2 }, ticks: { color: COLORS.ink2 }, grid: { color: COLORS.grid } } } }) });
+};
+
+/* ===== 2. FINANCIAL QUALITY ===== */
+function vQuality() {
+  const cols = [{ h: 'Company' }, { h: 'יחס שוטף', num: 1 }, { h: 'יחס מהיר', num: 1 }, { h: 'חוב/הון', num: 1 }, { h: 'חוב נטו/EBITDA', num: 1 }, { h: 'כיסוי ריבית', num: 1 }, { h: 'מזומן+השקעות', num: 1 }, { h: 'חוב כולל', num: 1 },
+    { h: 'מרווח גולמי', num: 1 }, { h: 'מרווח תפעולי', num: 1 }, { h: 'ROIC', num: 1 }, { h: 'FCF מרווח', num: 1 }, { h: 'FCF בניכוי SBC', num: 1 }, { h: 'CAGR 3ש׳', num: 1 }, { h: 'ציון בריאות', sort: 'h' }];
+  const rows = sorted(S.data).map(x => { const m = x.m; return `<tr class="click ${x.c.id === S.sel ? 'sel' : ''}" onclick="selCompany('${x.c.id}')"><td class="en">${x.c.name}</td>
+    <td class="n">${num(fN(m.currentRatio))}</td><td class="n">${num(fN(m.quickRatio))}</td><td class="n">${num(fN(m.de))}</td><td class="n">${num(m.netDebt <= 0 ? 'מזומן נטו' : fN(m.ndEbitda, 1))}</td><td class="n">${num(fN(m.coverage, 1))}</td>
+    <td class="n">${num(fM(m.cashAll))}</td><td class="n">${num(fM(m.totalDebt))}</td><td class="n">${num(fP(m.grossMargin))}</td><td class="n ${m.opMargin < 0 ? 'neg' : ''}">${num(fP(m.opMargin))}</td><td class="n">${num(fP(m.roic))}</td>
+    <td class="n">${num(fP(m.fcfMargin))}</td><td class="n ${m.adjFcfMargin < 0 ? 'neg' : ''}">${num(fP(m.adjFcfMargin))}</td><td class="n">${num(fP(m.revCagr3y))}</td><td>${scoreCell(x.h.score)}${x.h.severe.length ? ' <span class="sev4">⚠ חמור</span>' : ''}</td></tr>`; });
+  const x = byId(S.sel), m = x.m, c = x.c;
+  const comps = Object.values(x.h.comp).map(p => `<div class="hb"><span>${p.label}</span><div class="bar"><i style="width:${p.pts / p.max * 100}%"></i></div><b class="num">${p.pts}/${p.max}</b><small>${p.basis}</small></div>`).join('');
+  const severe = x.h.severe.length ? `<div class="alert crit"><b>⚠ סיכון פיננסי חמור:</b> ${x.h.severe.join(' · ')}</div>` : '';
+  const detail = `<div class="split"><div>${severe}${comps}<p class="txt">${solvencyText(x)}</p></div>
+    <div><div class="ch" style="height:220px"><canvas id="cMat"></canvas></div><p class="note">לוח פירעונות חוב (DEMO) מול מזומן והשקעות קצרות (${fM(m.cashAll)}) ו-FCF שנתי (${fM(m.fcf)}).</p>
+    <table class="kv">${kv([['סך נכסים', fM(c.totalAssets)], ['סך התחייבויות', fM(c.totalLiab)], ['הון עצמי', fM(m.equity)], ['מזומן ושווי מזומן', fM(c.cash)], ['השקעות לזמן קצר', fM(c.stInv)], ['חוב לזמן קצר', fM(c.stDebt)], ['חוב לזמן ארוך', fM(c.ltDebt)], ['חוב נטו', fM(m.netDebt)],
+      ['תזרים מפעילות', fM(c.ocf)], ['CapEx', fM(c.capex)], ['FCF', fM(m.fcf)], ['FCF Yield', fP(m.fcfYield)], ['צמיחת FCF', fPs(m.fcfGrowth)], ['המרת מזומן (FCF/רווח)', fN(m.cashConversion)], ['SBC', fM(c.sbc) + ' (' + fP(m.sbcPct) + ' מההכנסות)'], ['מרווח EBITDA', fP(m.ebitdaMargin)], ['מרווח נקי', fP(m.netMargin)]])}</table></div></div>`;
+  return panel('ניתוח איכות פיננסית — שלב סינון מחייב', sortable(cols, rows) + '<p class="note">חוב אינו פוסל אוטומטית: הציון מעריך חוב ביחס ל-EBITDA, לנזילות, לכיסוי הריבית ולתזרים. איכות תזרים נמדדת לאחר ניכוי תגמול מבוסס מניות.</p>')
+    + panel(`${c.name} — פירוט ציון הבריאות`, detail, companySelect());
+}
+vQuality.after = () => {
+  const x = byId(S.sel), mat = x.c.maturities;
+  chart('cMat', { type: 'bar', data: { labels: mat.length ? mat.map(z => z.y) : ['אין חוב'], datasets: [{ label: 'פירעון חוב ($M)', data: mat.map(z => z.a), backgroundColor: COLORS.s1, borderRadius: 4, borderSkipped: 'start', maxBarThickness: 36 }] },
+    options: baseOpts({ plugins: { legend: { display: false } } }) });
+};
+function kv(pairs) { return pairs.map(([k, v]) => `<tr><th>${k}</th><td class="n">${num(v)}</td></tr>`).join(''); }
+function solvencyText(x) {
+  const m = x.m, c = x.c, near = x.h.nearMaturities;
+  let t = m.netDebt <= 0 ? `לחברה מזומן נטו של ${fM(-m.netDebt)}, כך שהחוב (${fM(m.totalDebt)}) מכוסה במלואו ביתרות הנזילות. ` : `לחברה חוב נטו של ${fM(m.netDebt)}, ${isFinite(m.ndEbitda) && m.ndEbitda > 0 ? `כ-${m.ndEbitda.toFixed(1)} פעמים ה-EBITDA השנתי` : 'בעוד ה-EBITDA שלילי או זניח'}. `;
+  t += m.coverage === Infinity ? 'אין הוצאות ריבית מהותיות. ' : c.opIncome > 0 ? `הרווח התפעולי מכסה את הוצאות הריבית פי ${m.coverage.toFixed(1)}. ` : 'הרווח התפעולי שלילי ולכן אינו מכסה את הריבית; הפירעון תלוי ביתרות המזומן ובמימון חיצוני. ';
+  t += `היחס השוטף עומד על ${m.currentRatio.toFixed(2)}. `;
+  if (c.convDebt) t += `${fM(c.convDebt)} מהחוב הם אג"ח להמרה — מקור דילול פוטנציאלי. `;
+  if (near) t += near > m.cashAll + Math.max(m.fcf, 0) ? `פירעונות של ${fM(near)} עד סוף 2027 עולים על המזומן והתזרים — סיכון מימון מחדש מהותי.` : `פירעונות של ${fM(near)} עד סוף 2027 מכוסים במזומן הקיים.`;
+  return t;
+}
+
+/* ===== 3. UNDERVALUED ===== */
+function rangeBar(x) {
+  const lo = Math.min(x.v.low, x.c.price) * 0.9, hi = Math.max(x.v.high, x.c.price) * 1.05, P = v => clamp((v - lo) / (hi - lo) * 100, 0, 100);
+  if (!isFinite(x.v.low)) return '—';
+  return `<div class="rb" title="טווח שווי ${f$(x.v.low)}–${f$(x.v.high)} · בסיס ${f$(x.v.mid)} · מחיר ${f$(x.c.price)}"><i class="rng" style="right:${P(x.v.low)}%;width:${P(x.v.high) - P(x.v.low)}%"></i><i class="mid" style="right:${P(x.v.mid)}%"></i><i class="px" style="right:${P(x.c.price)}%"></i></div>`;
+}
+function vValue() {
+  const cols = [{ h: '' }, { h: 'Company' }, { h: 'מחיר', num: 1 }, { h: 'שווי שמרני', num: 1 }, { h: 'שווי בסיס', num: 1 }, { h: 'שווי אופטימי', num: 1 }, { h: 'טווח (▮ בסיס · ▼ מחיר)' }, { h: 'Margin of Safety', num: 1 }, { h: 'אפסייד לבסיס', num: 1, sort: 'mos' },
+    { h: 'הנחה מול עמיתים', num: 1 }, { h: 'הנחה מול היסטוריה', num: 1 }, { h: 'ציון תמחור', sort: 'v' }, { h: 'אמינות DCF' }];
+  const rows = sorted(S.data).map(x => `<tr class="click" onclick="go('report','${x.c.id}')"><td>${star(x.c.id)}</td><td class="en">${x.c.name}</td><td class="n">${num(f$(x.c.price))}</td>
+    <td class="n">${num(f$(x.v.low))}</td><td class="n">${num(f$(x.v.mid))}</td><td class="n">${num(f$(x.v.high))}</td><td>${rangeBar(x)}</td>
+    <td class="n ${x.v.mos < 0 ? 'neg' : 'pos'}">${num(x.v.mos < -1 ? '< −100%' : fPs(x.v.mos, 0))}</td><td class="n ${x.v.upside < 0 ? 'neg' : 'pos'}">${num(fPs(x.v.upside, 0))}</td>
+    <td class="n">${num(fPs(x.v.relDisc, 0))}</td><td class="n">${num(fPs(x.v.histDisc, 0))}</td><td>${scoreCell(x.v.score)}</td><td>${x.v.reliable ? '<span class="tag tag-ok">סבירה</span>' : '<span class="tag tag-est" title="' + esc(x.v.reliabilityNote) + '">נמוכה</span>'}</td></tr>`);
+  const fa = S.data.filter(x => x.f.dd >= 0.2).sort((a, b) => b.f.dd - a.f.dd);
+  const faCols = [{ h: 'Company' }, { h: 'ירידה מהשיא', num: 1 }, { h: 'תשואה 12ח׳', num: 1 }, { h: 'צמיחת הכנסות', num: 1 }, { h: 'צמיחת FCF', num: 1 }, { h: 'שינוי מרווח תפעולי', num: 1 }, { h: 'דחיסת מכפיל מול היסטוריה', num: 1 }, { h: 'פער עסק/מניה', num: 1 }, { h: 'סיווג' }, { h: 'נימוק' }];
+  const faRows = fa.map(x => `<tr class="click" onclick="go('report','${x.c.id}')"><td class="en">${x.c.name}</td><td class="n neg">${num(fP(-x.f.dd, 0))}</td><td class="n ${x.c.ret1y < 0 ? 'neg' : ''}">${num(x.c.ret1y + '%')}</td>
+    <td class="n">${num(fPs(x.m.revGrowth1y))}</td><td class="n">${num(fPs(x.m.fcfGrowth, 0))}</td><td class="n">${num((x.f.opChg * 100 > 0 ? '+' : '') + (x.f.opChg * 100).toFixed(1) + 'pp')}</td><td class="n">${num(fPs(x.f.multComp, 0))}</td>
+    <td class="n">${num((x.f.gap > 0 ? '+' : '') + x.f.gap.toFixed(0) + 'pp')}</td><td><span class="cls ${x.f.cls === 'Undervalued Quality' ? 'cls0' : x.f.cls === 'Value Trap Risk' ? 'cls3' : 'cls2'}">${x.f.cls}</span></td><td class="small">${x.f.why.join('; ')}</td></tr>`);
+  return panel('מנוע שווי הוגן ותמחור חסר', sortable(cols, rows) + `<p class="note">DCF מבוסס הכנסות ל-10 שנים, מרווח FCF ${'בניכוי SBC'} שמתכנס למרווח יעד, ו-3 תרחישים. מכפיל נמוך לבדו אינו מעיד על תמחור חסר: כשצמיחת ההכנסות נמוכה מ-3% או שקיים דגל מבני, משקל ההנחה במכפילים מופחת ב-50%. ההנחות ניתנות לשינוי בדוח המחקר.</p>`)
+    + panel('Fallen Angels — Undervalued Quality מול Value Trap', faCols.length && faRows.length ? sortable(faCols, faRows) : '<div class="empty">אין חברות בירידה של 20%+ מהשיא.</div>', 'חברות שירדו 20%+ מהשיא השנתי')
+    + `<p class="note">פער עסק/מניה = צמיחת הכנסות (pp) פחות תשואת המניה ב-12 חודשים. פער חיובי גדול מרמז שהמניה ירדה יותר משהעסק נחלש — אך אינו מוכיח תמחור חסר.</p>`;
+}
+
+/* ===== 4. UPCOMING EARNINGS + POST-EARNINGS MONITOR ===== */
+const GUID = { raised: '<span class="tag tag-ok">הועלתה</span>', maintained: '<span class="tag">נשמרה</span>', lowered: '<span class="tag tag-bad">הורדה</span>' };
+function vEarnings() {
+  const up = S.data.filter(x => x.c.earnOffset >= 0).sort((a, b) => a.c.earnOffset - b.c.earnOffset);
+  const cols = [{ h: '' }, { h: 'Company' }, { h: 'תאריך' }, { h: 'ימים', num: 1 }, { h: 'מועד' }, { h: 'EPS צפוי', num: 1 }, { h: 'הכנסות צפויות', num: 1 }, { h: 'עדכוני EPS 90י׳', num: 1 }, { h: '↑/↓ אנליסטים', num: 1 }, { h: 'תחזית הנהלה' }, { h: 'עקיפות EPS', num: 1 }, { h: 'הפתעה ממוצעת', num: 1 }, { h: 'מומנטום 3ח׳', num: 1 }, { h: 'ציון הזדמנות' }];
+  const rows = up.map(x => `<tr class="click ${x.c.id === S.sel ? 'sel' : ''}" onclick="selCompany('${x.c.id}')"><td>${star(x.c.id)}</td><td class="en">${x.c.name}</td><td>${num(x.m.earningsDate)} ${dateBadge(x.c)}</td><td class="n">${num(x.c.earnOffset)}</td><td>${x.c.timing === 'AMC' ? 'אחרי המסחר' : 'לפני המסחר'}</td>
+    <td class="n">${num(f$(x.c.epsEst))}</td><td class="n">${num(fM(x.c.revEstQ))}</td><td class="n ${x.c.rev90 < 0 ? 'neg' : 'pos'}">${num((x.c.rev90 > 0 ? '+' : '') + x.c.rev90 + '%')}</td><td class="n">${num(x.c.revUp + '/' + x.c.revDown)}</td><td>${GUID[x.c.guidance]}</td>
+    <td class="n">${num(`${x.c.hist.eps.filter(z => z > 0).length}/${x.c.hist.eps.length}`)}${x.e.partial ? ' <span class="tag tag-est" title="פחות משמונה רבעונים">חלקי</span>' : ''}</td><td class="n">${num(x.e.avgS.toFixed(1) + '%')}</td><td class="n">${num(x.c.ret3m + '%')}</td><td>${scoreCell(x.e.score)}</td></tr>`);
+  const x = byId(S.sel);
+  const parts = Object.values(x.e.parts).map(p => `<div class="hb"><span>${p.label}</span><div class="bar"><i style="width:${p.pts / p.max * 100}%"></i></div><b class="num">${p.pts.toFixed(1)}/${p.max}</b></div>`).join('');
+  const detail = `<div class="split"><div>${parts}<p class="txt">${earningsText(x)}</p></div><div><div class="ch" style="height:200px"><canvas id="cSurp"></canvas></div><div class="ch" style="height:200px"><canvas id="cReact"></canvas></div><p class="note">תגובות המחיר מבוססות על מסלולי מחיר סינתטיים (DEMO).</p></div></div>`;
+  const rep = S.data.filter(x => x.c.earnOffset < 0 || S.watch[x.c.id]);
+  const mon = rep.map(y => `<div class="mon"><h3 class="en">${y.c.name} <small>${y.c.earnOffset < 0 ? `דיווח לפני ${-y.c.earnOffset} ימים · תגובה ${y.c.lastReact > 0 ? '+' : ''}${y.c.lastReact}%` : 'ברשימת מעקב — טרם דיווח'}</small></h3>
+    <div class="kpis"><span>Relative Strength 20י׳: <b class="num">${fPs(y.mon.rs)}</b></span><span>RSI: <b class="num">${y.mon.rsi[y.mon.rsi.length - 1].toFixed(0)}</b></span><span>ATR: <b class="num">${fP(y.mon.atrPct)}</b></span><span>מחזור 5י׳ מול ממוצע: <b class="num">${y.mon.volRatio.toFixed(2)}x</b></span><span>עדכוני אנליסטים: <b class="num">${y.c.rev90 > 0 ? '+' : ''}${y.c.rev90}%</b></span><span>שווי בסיס: <b class="num">${f$(y.v.mid)}</b></span></div>
+    ${y.mon.alerts.length ? y.mon.alerts.map(a => `<div class="alert warn"><b>⚑ ${a.k}</b> · ${a.he} — ${a.d}</div>`).join('') : '<div class="alert okk">✓ אין התראות פעילות</div>'}
+    <div class="ch" style="height:220px"><canvas id="cMon_${y.c.id}"></canvas></div></div>`).join('');
+  return panel('דוחות רבעוניים קרובים', sortable(cols, rows) + '<p class="note">"משוער" = תאריך שלא אושר רשמית ע"י החברה; מוערך לפי דפוס דיווח היסטורי. דוח טוב אינו מבטיח עלייה: המערכת בודקת גם אם הציפיות כבר מתומחרות.</p>')
+    + panel(`${x.c.name} — ניתוח הזדמנות הדוח`, detail, companySelect())
+    + panel('Post-Earnings Momentum Monitor', mon || '<div class="empty">אין חברות שדיווחו לאחרונה או ברשימת המעקב.</div>', 'התראות הן אינדיקציות בלבד — לא חיזוי ודאי של תיקון במחיר');
+}
+vEarnings.after = () => {
+  const x = byId(S.sel), q = x.c.hist.eps.map((_, i) => `Q-${x.c.hist.eps.length - i}`);
+  chart('cSurp', { type: 'bar', data: { labels: q, datasets: [{ label: 'הפתעת EPS (%)', data: x.c.hist.eps, backgroundColor: x.c.hist.eps.map(v => v >= 0 ? COLORS.s1 : COLORS.s2), borderRadius: 4, maxBarThickness: 28 }] }, options: baseOpts({ plugins: { legend: { display: false }, title: { display: true, text: 'הפתעת EPS ברבעונים קודמים (%) — כחול: עקיפה · כתום: החטאה', color: COLORS.ink2 } } }) });
+  chart('cReact', { type: 'bar', data: { labels: q, datasets: [{ label: 'תגובת יום הדוח (%)', data: x.t.reactions.map(r => +(r * 100).toFixed(2)), backgroundColor: x.t.reactions.map(v => v >= 0 ? COLORS.s1 : COLORS.s2), borderRadius: 4, maxBarThickness: 28 }] }, options: baseOpts({ plugins: { legend: { display: false }, title: { display: true, text: 'תגובת המניה ביום הדוח (%) — DEMO', color: COLORS.ink2 } } }) });
+  S.data.filter(y => y.c.earnOffset < 0 || S.watch[y.c.id]).forEach(y => {
+    const n = 90, s = y.mon.s.slice(-n), lab = s.map((_, i) => i - n + 1);
+    chart('cMon_' + y.c.id, { type: 'line', data: { labels: lab, datasets: [
+      { label: 'מחיר', data: s.map(z => +z.c.toFixed(2)), borderColor: COLORS.s1, borderWidth: 2, pointRadius: 0 },
+      { label: 'ממוצע 20', data: y.mon.s20.slice(-n), borderColor: COLORS.s2, borderWidth: 2, pointRadius: 0 },
+      { label: 'ממוצע 50', data: y.mon.s50.slice(-n), borderColor: COLORS.s3, borderWidth: 2, pointRadius: 0 }] }, options: baseOpts() });
+  });
+};
+function earningsText(x) {
+  const c = x.c, e = x.e;
+  let t = `החברה עקפה את תחזית ה-EPS ב-${c.hist.eps.filter(z => z > 0).length} מתוך ${e.n} הרבעונים האחרונים, בהפתעה ממוצעת של ${e.avgS.toFixed(1)}%. `;
+  t += c.rev90 > 2 ? 'האנליסטים העלו תחזיות בשלושת החודשים האחרונים — מגמה תומכת, אך גם מעלה את הרף. ' : c.rev90 < -2 ? 'האנליסטים הורידו תחזיות — הרף נמוך יותר, אך המגמה העסקית שלילית. ' : 'עדכוני האנליסטים יציבים יחסית. ';
+  t += c.ret3m > 10 ? `המניה עלתה ${c.ret3m}% בשלושה חודשים, כך שחלק מהציפיות החיוביות כנראה כבר מגולם במחיר. ` : c.ret3m < 0 ? `המניה ירדה ${-c.ret3m}% בשלושה חודשים — הציפיות נמוכות יחסית. ` : '';
+  t += `${c.guidanceNote} `;
+  t += isFinite(x.v.mos) && x.v.mos > 0.15 ? 'בהינתן פער בין המחיר לשווי הבסיס, דוח חיובי עשוי לשמש קטליזטור להערכה מחודשת — זו השערה, לא תחזית.' : 'מאחר שהמחיר אינו נמוך משמעותית משווי הבסיס, פוטנציאל ההערכה המחודשת סביב הדוח מוגבל.';
+  if (e.partial) t += ` <b>שים לב:</b> קיימים רק ${e.n} רבעונים היסטוריים — פחות משמונה, ולכן המסקנות חלקיות.`;
+  return t;
+}
+
+/* ===== 5. RISK INTELLIGENCE ===== */
+const SEVL = { 1: ['נמוכה', 'good'], 2: ['בינונית', 'warn'], 3: ['גבוהה', 'serious'], 4: ['קריטית', 'crit'] };
+const PLAN = { '10b5-1': 'תוכנית 10b5-1 (מתוכננת)', tax: 'מכירה לצורכי מס', open: 'שוק פתוח' };
+function vRisk() {
+  const cols = [{ h: '' }, { h: 'Company' }, { h: 'ציון סיכון', sort: 'r' }, { h: 'דילול שנתי (3ש׳)', num: 1 }, { h: 'SBC/הכנסות', num: 1 }, { h: 'דגלים', num: 1 }, { h: 'Risk Override' }, { h: 'הערכה' }];
+  const rows = [...S.data].sort((a, b) => b.r.score - a.r.score).map(x => `<tr class="click" onclick="go('report','${x.c.id}')"><td>${star(x.c.id)}</td><td class="en">${x.c.name}</td><td>${scoreCell(x.r.score, true)}</td>
+    <td class="n ${x.m.dilutionRate > 0.03 ? 'neg' : ''}">${num(fPs(x.m.dilutionRate))}</td><td class="n">${num(fP(x.m.sbcPct))}</td><td class="n">${num(x.c.news.length)}</td>
+    <td>${x.r.override ? `<span class="ovr ovr-${x.r.override.level}">${x.r.override.level === 'disqualify' ? '⛔ פסילה' : '⤓ הגבלת דירוג'}</span> <small>${esc(x.r.override.reason.replace('Risk Override: ', ''))}</small>` : '—'}</td><td>${clsBadge(x.fin)}</td></tr>`);
+  const ff = S.flagFilter;
+  const flags = S.data.flatMap(x => x.c.news.map(n => ({ x, n }))).filter(o => ff === 'all' || (ff === 'new' && !o.n.known) || (ff === 'high' && o.n.sev >= 3)).sort((a, b) => b.n.sev - a.n.sev || b.n.d.localeCompare(a.n.d));
+  const fCols = [{ h: 'Company' }, { h: 'קטגוריה' }, { h: 'תיאור האירוע' }, { h: 'תאריך' }, { h: 'מקור' }, { h: 'סטטוס' }, { h: 'חומרה' }, { h: 'השפעה אפשרית' }, { h: 'חדש / ידוע' }];
+  const fRows = flags.map(({ x, n }) => `<tr><td class="en">${x.c.name}</td><td class="en small">${n.cat}</td><td>${n.title}</td><td>${num(n.d)}</td><td class="small">${DEMO_SOURCE}</td>
+    <td><span class="tag ${n.status === 'מאומת' ? 'tag-ok' : n.status === 'טענה' ? 'tag-est' : ''}">${n.status}</span></td><td><span class="sevb sev-${SEVL[n.sev][1]}">● ${SEVL[n.sev][0]}</span></td><td class="small">${n.impact}</td><td>${n.known ? 'ידוע לשוק' : '<b class="newb">חדש</b>'}</td></tr>`);
+  const ins = S.data.flatMap(x => x.c.insiders.map(i => ({ x, i }))).sort((a, b) => b.i.d.localeCompare(a.i.d));
+  const iRows = ins.map(({ x, i }) => { const unusual = i.type === 'sell' && i.plan === 'open' && i.val >= 5; return `<tr><td class="en">${x.c.name}</td><td>${num(i.d)}</td><td class="en">${i.who}</td><td>${i.type === 'buy' ? '<span class="tag tag-ok">קנייה</span>' : 'מכירה'}</td><td class="n">${num('$' + i.val + 'M')}</td><td>${PLAN[i.plan]}</td>
+    <td class="small">${unusual ? '<b class="newb">חריגה</b> — מכירה גדולה מחוץ לתוכנית מתוכננת; מצדיקה בדיקה, אך אינה בהכרח סימן שלילי' : i.type === 'buy' ? 'קנייה בשוק הפתוח — אות חיובי מתון' : i.plan === '10b5-1' ? 'מכירה מתוכננת מראש — משקל אינפורמטיבי נמוך' : i.plan === 'tax' ? 'מכירה לכיסוי מס על הבשלת מניות — שגרתית' : 'מכירה קטנה בשוק הפתוח'}</td></tr>`; });
+  const dRows = S.data.map(x => { const d = x.c.dilution; return `<tr><td class="en">${x.c.name}</td><td class="n">${num(x.c.shares3y + 'M → ' + x.c.shares + 'M')}</td><td class="n ${x.m.dilutionRate > 0.03 ? 'neg' : ''}">${num(fPs(x.m.dilutionRate))}</td><td class="n">${num(fM(x.c.sbc))}</td><td class="n">${num(d.options + 'M')}</td><td class="n">${num(fM(x.c.convDebt))}</td><td class="n">${num(d.buyback ? fM(d.buyback) : '—')}</td><td>${d.atm ? '<span class="tag tag-bad">ATM פעיל</span>' : '—'}</td><td>${d.shelf ? '<span class="tag tag-est">Shelf קיים</span>' : '—'}</td><td class="small">${dilutionText(x)}</td></tr>`; });
+  return panel('מודיעין סיכונים ו-Risk Override', sortable(cols, rows))
+    + panel('דגלים אדומים — חדשות ודיווחים', `<div class="filters"><button class="chip ${ff === 'all' ? 'on' : ''}" onclick="S.flagFilter='all';render()">הכול</button><button class="chip ${ff === 'high' ? 'on' : ''}" onclick="S.flagFilter='high';render()">חומרה גבוהה+</button><button class="chip ${ff === 'new' ? 'on' : ''}" onclick="S.flagFilter='new';render()">חדשים בלבד</button></div>` + sortable(fCols, fRows) + '<p class="note">"מאומת" = עובדה מדווחת ברשומה רשמית; "טענה" = טענה של צד שלישי (תביעה, Short Seller, עיתונות); "ספקולטיבי" = חשש בשוק ללא ראיה ישירה.</p>')
+    + panel('פעילות בעלי עניין', sortable([{ h: 'Company' }, { h: 'תאריך' }, { h: 'מי' }, { h: 'סוג' }, { h: 'היקף', num: 1 }, { h: 'מסגרת' }, { h: 'פרשנות' }], iRows))
+    + panel('דילול מניות', sortable([{ h: 'Company' }, { h: 'מניות (3ש׳)', num: 1 }, { h: 'קצב שנתי', num: 1 }, { h: 'SBC', num: 1 }, { h: 'אופציות', num: 1 }, { h: 'אג"ח המרה', num: 1 }, { h: 'רכישה עצמית', num: 1 }, { h: 'ATM' }, { h: 'Shelf' }, { h: 'הערכת סיכון עתידי' }], dRows));
+}
+function dilutionText(x) {
+  const d = x.c.dilution, p = [];
+  if (d.atm) p.push('הנפקה שהוכרזה בפועל (ATM) — דילול צפוי');
+  else if (d.shelf) p.push('Shelf הוא מסגרת קיימת בלבד, לא הנפקה שהוכרזה');
+  if (x.c.convDebt) p.push('אג"ח להמרה עשוי לדלל אם המחיר יעלה מעל מחיר ההמרה');
+  if (x.m.sbcPct > 0.15) p.push('SBC גבוה מ-15% מההכנסות');
+  if (d.buyback && x.m.dilutionRate <= 0) p.push('הרכישה העצמית מקזזת את ה-SBC');
+  return p.join('; ') || 'סיכון דילול נמוך';
+}
+
+/* ===== 6. ENTRY & EXIT ===== */
+function stratTable(title, desc, rows) {
+  const ins = rows[0] && rows[0].n < 8;
+  const body = rows.map(r => r.n === 0 ? `<tr><td>${r.label}</td><td colspan="10" class="empty">אין אירועים מתאימים</td></tr>` : `<tr><td>${r.label}</td><td class="n">${num(r.n)}</td><td class="n ${r.avg < 0 ? 'neg' : 'pos'}">${num(fPs(r.avg, 2))}</td><td class="n">${num(fPs(r.med, 2))}</td><td class="n">${num(fP(r.win, 0))}</td><td class="n neg">${num(fP(r.maxDD, 1))}</td><td class="n">${num(fP(r.vol, 2))}</td><td class="n">${num(fN(r.riskAdj))}</td><td class="n">${num(r.hold + ' ימים')}</td><td class="n neg">${num(fPs(r.p10, 2))}</td><td>${r.conf}</td></tr>`).join('');
+  return `<h3>${title}</h3><p class="note">${desc}</p>${ins ? '<div class="alert warn">⚠ אין מספיק נתונים לחיזוי אמין: פחות משמונה אירועי דוח היסטוריים. התוצאות מוצגות לעיון בלבד.</div>' : ''}
+  <div class="tw"><table><thead><tr><th>חלון</th><th class="n">אירועים</th><th class="n">תשואה ממוצעת</th><th class="n">חציון</th><th class="n">Win Rate</th><th class="n">Max Drawdown</th><th class="n">תנודתיות</th><th class="n">תשואה/סיכון</th><th class="n">החזקה</th><th class="n">Downside (אחוזון 10)</th><th>רמת ביטחון</th></tr></thead><tbody>${body}</tbody></table></div>`;
+}
+function setCost(v) { S.costBps = clamp(+v || 0, 0, 200); recompute(); render(); }
+function vTiming() {
+  const x = byId(S.sel), t = x.t;
+  const head = `<div class="filters">${companySelect()}<label>עלויות עסקה (עמלה+Slippage+Spread) לכל צד: <input class="inp sm" type="number" value="${S.costBps}" onchange="setCost(this.value)"> bps</label></div>
+  <div class="alert warn">כל הנתונים במסך זה מבוססים על מסלולי מחיר <b>סינתטיים</b> שנוצרו לצורכי הדגמה. אין להם ערך חיזוי. אין כאן תאריך מכירה מדויק או הבטחת רווח.</div>`;
+  const chartP = `<div class="ch" style="height:300px"><canvas id="cPath"></canvas></div><p class="note">מסלול מחיר ממוצע סביב ${t.n} דוחות קודמים (בסיס = 30 ימים לפני הדוח), עם רצועת ±1 סטיית תקן. יום 0 = המסחר הראשון שמשקף את התוצאות.</p>`;
+  return panel(`חלונות כניסה ויציאה — ${x.c.name}`, head + chartP
+    + stratTable('Strategy A — Pre-Earnings Run-Up', 'כניסה לפני הדוח ויציאה ביום המסחר שלפני פרסום התוצאות (ללא חשיפה לאירוע עצמו).', t.A)
+    + stratTable('Strategy B — Earnings Event', 'כניסה לפני הדוח והחזקה במהלך פרסום התוצאות (חשיפה מלאה לתגובה).', t.B)
+    + stratTable('Strategy C — Post-Earnings Drift', 'כניסה רק אחרי תגובה חיובית ביום הדוח, ובחינת המשך המומנטום.', t.C)
+    + `<p class="txt">${timingText(x)}</p>`);
+}
+vTiming.after = () => {
+  const t = byId(S.sel).t;
+  const up = t.avgPath.map((v, i) => +(v + t.sdPath[i]).toFixed(2)), dn = t.avgPath.map((v, i) => +(v - t.sdPath[i]).toFixed(2));
+  chart('cPath', { type: 'line', data: { labels: t.days, datasets: [
+    { label: '+1σ', data: up, borderWidth: 0, pointRadius: 0, fill: '+1', backgroundColor: 'rgba(57,135,229,0.15)' },
+    { label: '−1σ', data: dn, borderWidth: 0, pointRadius: 0, fill: false },
+    { label: 'מסלול ממוצע (%)', data: t.avgPath.map(v => +v.toFixed(2)), borderColor: COLORS.s1, borderWidth: 2, pointRadius: 0 }] },
+    options: baseOpts({ plugins: { legend: { labels: { color: COLORS.ink2, filter: i => i.datasetIndex === 2 } } }, scales: { x: { title: { display: true, text: 'ימים ביחס לדוח', color: COLORS.ink2 }, ticks: { color: COLORS.ink2 }, grid: { color: COLORS.grid } }, y: { title: { display: true, text: 'שינוי מצטבר (%)', color: COLORS.ink2 }, ticks: { color: COLORS.ink2 }, grid: { color: COLORS.grid } } } }) });
+};
+function timingText(x) {
+  const t = x.t, best = [...t.A, ...t.B, ...t.C].filter(r => r.n >= 3 && isFinite(r.riskAdj)).sort((a, b) => b.riskAdj - a.riskAdj)[0];
+  if (t.n < 8) return `לחברה יש רק ${t.n} דוחות היסטוריים — אין מספיק נתונים כדי להעדיף חלון החזקה כלשהו.`;
+  let s = best ? `החלון עם יחס התשואה/סיכון ההיסטורי הגבוה ביותר: "${best.label}" (ממוצע ${fPs(best.avg, 2)}, Win Rate ${fP(best.win, 0)}, ${best.n} אירועים). ` : '';
+  s += `עם ${t.n} תצפיות בלבד, אף תוצאה אינה מובהקת סטטיסטית ברמה שמאפשרת הסתמכות. `;
+  s += 'תנאים לבחינה מחדש של החזקה: שינוי בתחזית ההנהלה, עדכוני אנליסטים חדים, פגיעה בממוצע 50 יום, או סגירת פער השווי.';
+  return s;
+}
+
+/* ===== 7. WATCHLIST ===== */
+function rescan() { recompute(); render(); toast('סריקה חוזרת הושלמה — ' + S.lastScan.toLocaleTimeString('he-IL')); }
+function resetSnap(id) { const x = byId(id); S.watch[id].snap = { h: x.h.score, v: x.v.score, e: x.e.score, r: x.r.score, idx: x.fin.idx, price: x.c.price }; S.watch[id].added = new Date().toISOString(); saveWatch(); render(); }
+function vWatch() {
+  const ids = Object.keys(S.watch).filter(byId);
+  if (!ids.length) return panel('רשימת מעקב', '<div class="empty">הרשימה ריקה. סמן ☆ ליד חברה בסורק או בכל טבלה.</div><p class="note">הרשימה נשמרת בדפדפן זה בלבד.</p>');
+  const rows = ids.map(id => {
+    const x = byId(id), s = S.watch[id].snap, d = k => x[k].score - s[k];
+    const alerts = [];
+    if (Math.abs(d('h')) >= 10) alerts.push(`שינוי בציון בריאות ${d('h') > 0 ? '+' : ''}${d('h')}`);
+    if (Math.abs(d('v')) >= 10) alerts.push(`שינוי בציון תמחור ${d('v') > 0 ? '+' : ''}${d('v')}`);
+    if (Math.abs(d('r')) >= 10) alerts.push(`שינוי בציון סיכון ${d('r') > 0 ? '+' : ''}${d('r')}`);
+    if (x.fin.idx !== s.idx) alerts.push(`שינוי סיווג: ${CLASSES[s.idx]} → ${x.fin.cls}`);
+    x.mon.alerts.forEach(a => alerts.push(a.k));
+    const dl = k => { const v = d(k); return v ? ` <small class="${(k === 'r' ? -v : v) > 0 ? 'pos' : 'neg'}">(${v > 0 ? '+' : ''}${v})</small>` : ''; };
+    return `<tr><td>${star(id)}</td><td class="en click" onclick="go('report','${id}')">${x.c.name}</td><td class="small">${num(S.watch[id].added.slice(0, 10))}</td><td>${scoreCell(x.h.score)}${dl('h')}</td><td>${scoreCell(x.v.score)}${dl('v')}</td><td>${scoreCell(x.e.score)}${dl('e')}</td><td>${scoreCell(x.r.score, true)}${dl('r')}</td><td>${clsBadge(x.fin)}</td><td>${num(x.m.earningsDate)} ${dateBadge(x.c)}</td>
+      <td class="small">${alerts.length ? alerts.map(a => `<div class="alert warn mini">⚑ ${a}</div>`).join('') : '—'}</td><td><button class="btn sm" onclick="resetSnap('${id}')">אפס בסיס</button></td></tr>`;
+  });
+  return panel('רשימת מעקב והתראות', `<div class="filters"><button class="btn" onclick="rescan()">↻ הרץ סריקה חוזרת</button><span class="note">סריקה אחרונה: ${S.lastScan.toLocaleString('he-IL')}. שינוי ציון של 10+ נקודות או שינוי סיווג מסומן כהתראה. כדי לראות התראה בהדגמה — שנה הנחות DCF בדוח המחקר וחזור לכאן.</span></div>`
+    + sortable([{ h: '' }, { h: 'Company' }, { h: 'נוספה' }, { h: 'בריאות' }, { h: 'תמחור' }, { h: 'הזדמנות' }, { h: 'סיכון' }, { h: 'הערכה' }, { h: 'דוח הבא' }, { h: 'התראות' }, { h: '' }], rows)
+    + '<p class="note">הרשימה נשמרת בדפדפן זה בלבד. בגרסת ה-Production הסריקות רצות לפי לוח זמנים וההתראות נשלחות בדוא"ל/Telegram.</p>');
+}
+
+/* ===== 8. COMPANY REPORT ===== */
+function setA(k, v) { const x = byId(S.sel); S.assumptions[S.sel] = { ...x.a, [k]: v }; recompute(); renderReportKeepScroll(); }
+function resetA() { delete S.assumptions[S.sel]; recompute(); renderReportKeepScroll(); }
+function renderReportKeepScroll() { const y = window.scrollY; render(); window.scrollTo(0, y); }
+function slider(k, label, val, min, max, step, fmt) { return `<label class="sl"><span>${label}</span><input type="range" min="${min}" max="${max}" step="${step}" value="${val}" onchange="setA('${k}',+this.value)"><b class="num">${fmt(val)}</b></label>`; }
+function vReport() {
+  const x = byId(S.sel), c = x.c, m = x.m, v = x.v, a = x.a;
+  const secs = reportSections(x);
+  const sens = `<div class="tw"><table class="sens"><thead><tr><th>WACC \\ g טרמינלי</th>${v.grid.gts.map(g => `<th class="n">${fP(g)}</th>`).join('')}</tr></thead><tbody>${v.grid.waccs.map((w, i) => `<tr><th class="n">${fP(w)}</th>${v.grid.cells[i].map(p => { const r = p / c.price - 1; return `<td class="n" style="background:${r >= 0 ? `rgba(57,135,229,${Math.min(Math.abs(r), 1) * 0.45})` : `rgba(217,89,38,${Math.min(Math.abs(r), 1) * 0.45})`}">${num(f$(p))}</td>`; }).join('')}</tr>`).join('')}</tbody></table></div><p class="note">כחול = שווי מעל מחיר השוק (${f$(c.price)}), כתום = מתחת. עוצמת הצבע לפי גודל הפער.</p>`;
+  const dcf = `<div class="split"><div>
+    ${slider('g1', 'צמיחת הכנסות שנה 1', a.g1, -0.05, 0.4, 0.01, fP)}${slider('gT', 'צמיחה טרמינלית', a.gT, 0, 0.04, 0.0025, x => fP(x, 2))}${slider('wacc', 'שיעור היוון (WACC)', a.wacc, 0.06, 0.15, 0.0025, x => fP(x, 2))}${slider('mTarget', 'מרווח FCF יעד (שנה 5)', a.mTarget, 0, 0.45, 0.01, fP)}
+    <label class="sl"><span>ניכוי SBC מה-FCF</span><input type="checkbox" ${a.useAdj ? 'checked' : ''} onchange="setA('useAdj',this.checked)"><b>${a.useAdj ? 'כן (שמרני)' : 'לא'}</b></label>
+    <button class="btn sm" onclick="resetA()">החזר להנחות ברירת מחדל</button>
+    <table class="kv">${kv([['שווי — תרחיש שמרני', f$(v.low)], ['שווי — תרחיש בסיס', f$(v.mid)], ['שווי — תרחיש אופטימי', f$(v.high)], ['מחיר שוק', f$(c.price)], ['Margin of Safety (בסיס)', v.mos < -1 ? '< −100%' : fPs(v.mos, 0)], ['אפסייד/דאונסייד לבסיס', fPs(v.upside, 0)], ['דאונסייד לתרחיש שמרני', fPs(v.downsideCons, 0)], ['חלק הערך הטרמינלי', fP(v.base.tvShare, 0)], ['מניות בדילול מלא', c.shares + 'M']])}</table>
+    <p class="note">${v.reliabilityNote} שמרני: צמיחה ×0.6, מרווח −3pp, WACC +1pp · אופטימי: צמיחה ×1.25, מרווח +3pp, WACC −0.75pp.</p></div>
+    <div>${sens}<h3>מכפילים יחסיים</h3><div class="tw"><table><thead><tr><th>מכפיל</th><th class="n">חברה</th><th class="n">חציון סקטור (DEMO)</th><th class="n">ממוצע 5ש׳ של החברה</th></tr></thead><tbody>${v.rel.map(r => { const h = v.hist.find(z => z.k === r.k); return `<tr><td class="en">${{ pe: 'P/E', fpe: 'Forward P/E', evRev: 'EV/Revenue', evEbitda: 'EV/EBITDA', evFcf: 'EV/FCF', pfcf: 'Price/FCF', ps: 'Price/Sales' }[r.k]}</td><td class="n">${num(fX(r.own))}</td><td class="n">${num(fX(r.peer))}</td><td class="n">${num(h ? fX(h.hist) : '—')}</td></tr>`; }).join('')}</tbody></table></div>
+    <p class="note">עמיתים ביקום ההדגמה: ${S.data.filter(y => y.c.sector === c.sector && y.c.id !== c.id).map(y => y.c.name).join(', ') || '—'}.</p></div></div>`;
+  const prov = `<div class="tw"><table><thead><tr><th>קבוצת נתונים</th><th>שכבה</th><th>מקור</th><th>עדכון</th><th>ספק ב-Production</th></tr></thead><tbody>${[
+    ['מחיר, שווי שוק, טווח 52 שבועות', 'RAW', 'Massive (Polygon) / FMP'], ['דוחות כספיים (מאזן, רווח והפסד, תזרים)', 'RAW', 'SEC EDGAR XBRL companyfacts'], ['תאריך דוח ומועד', 'RAW', 'Finnhub / Nasdaq calendar + אישור IR'], ['תחזיות ועדכוני אנליסטים', 'RAW', 'FMP / Finnhub (בתשלום)'],
+    ['בעלי עניין (Form 4)', 'RAW', 'SEC EDGAR Form 4'], ['הנפקות / Shelf / ATM', 'RAW', 'SEC EDGAR S-3, 424B, 8-K'], ['חדשות ודגלים', 'RAW', 'EDGAR 8-K + Finnhub news'],
+    ['יחסים פיננסיים ומכפילים', 'CALC', 'חישוב מקומי'], ['ציונים, DCF, Backtest', 'MODEL', 'מודל מקומי'], ['טקסט הסקירה', 'AI', 'פרשנות מבוססת כללים על השכבות לעיל']].map(([g, l, p]) => `<tr><td>${g}</td><td>${SRC(l)}</td><td>${DEMO_SOURCE}</td><td>${num(SNAPSHOT_DATE)}</td><td class="small en">${p}</td></tr>`).join('')}</tbody></table></div>`;
+  return `<div id="reportBody">${panel(`${c.name} <span class="tk">${c.ticker} · ${c.exch} · ${c.sector}</span>`, `<div class="filters">${companySelect()}${star(c.id)}<button class="btn exp" onclick="exportPDF()">ייצוא PDF</button><button class="btn exp" onclick="exportCompanyXlsx()">ייצוא Excel</button><button class="btn" onclick="go('timing','${c.id}')">חלונות כניסה/יציאה ←</button></div>
+    <div class="hero"><div><small>הערכה סופית</small>${clsBadge(x.fin)}<small class="num">ציון משוקלל ${x.fin.composite}</small></div><div><small>בריאות</small>${scoreCell(x.h.score)}</div><div><small>תמחור</small>${scoreCell(x.v.score)}</div><div><small>הזדמנות דוח</small>${scoreCell(x.e.score)}</div><div><small>סיכון</small>${scoreCell(x.r.score, true)}</div><div><small>דוח הבא</small><b class="num">${m.earningsDate}</b> ${dateBadge(c)}</div></div>
+    <div class="demo-inline">סקירת הדגמה — חברה בדיונית ונתונים סינתטיים. אינה ייעוץ השקעות ואינה המלצה לקנייה או למכירה.</div>
+    ${secs.map(([h, en, body]) => `<article class="rsec"><h3>${h} <small class="en">${en}</small> ${SRC('AI')}</h3>${body}</article>`).join('')}`)}
+    ${panel('מודל DCF ורגישות', dcf, 'שנה הנחה — כל הציונים מתעדכנים')}
+    ${panel('הכנסות ותזרים', '<div class="ch" style="height:240px"><canvas id="cRev"></canvas></div><p class="note">ה-FCF ההיסטורי לפני השנה האחרונה אינו זמין בנתוני ההדגמה מעבר לשנה הקודמת.</p>')}
+    ${panel('מקורות ותאריכי עדכון', prov, 'הפרדה בין נתונים גולמיים, חישובים, הערכות מודל ופרשנות')}</div>`;
+}
+vReport.after = () => {
+  const x = byId(S.sel), yrs = x.c.rev.map((_, i) => `FY${2022 + i}`);
+  chart('cRev', { type: 'bar', data: { labels: yrs, datasets: [{ label: 'הכנסות ($M)', data: x.c.rev, backgroundColor: COLORS.s1, borderRadius: 4, maxBarThickness: 34 }, { label: 'FCF ($M)', data: x.c.rev.map((_, i) => i === 4 ? x.m.fcf : i === 3 ? x.c.fcfPrev : null), backgroundColor: COLORS.s2, borderRadius: 4, maxBarThickness: 34 }] }, options: baseOpts() });
+};
+
+function reportSections(x) {
+  const c = x.c, m = x.m, v = x.v, h = x.h, r = x.r, e = x.e, t = x.t, f = x.f;
+  const P = s => `<p class="txt">${s}</p>`;
+  const overview = P(`${c.name} (${c.ticker}) נסחרת ב-${c.exch} ופועלת בתחום ${c.sector}. ${c.desc} היתרון התחרותי המוערך: ${c.moat}`);
+  const fin = P(`החברה מכניסה כ-${fM(m.revenue)} בשנה, ${m.revGrowth1y >= 0 ? 'צמיחה של' : 'ירידה של'} ${fP(Math.abs(m.revGrowth1y))} לעומת השנה הקודמת ו-CAGR של ${fP(m.revCagr3y)} בשלוש השנים האחרונות. ${c.netIncome > 0 ? `היא רווחית, עם רווח נקי של ${fM(c.netIncome)} (מרווח ${fP(m.netMargin)}) ומרווח תפעולי של ${fP(m.opMargin)}` : `היא מפסידה: הפסד נקי של ${fM(-c.netIncome)} ומרווח תפעולי של ${fP(m.opMargin)}`}; המרווח התפעולי ${m.opMargin > c.opMarginPrev ? 'השתפר' : 'נשחק'} מ-${fP(c.opMarginPrev)} בשנה הקודמת.`)
+    + P(`בקופה ${fM(m.cashAll)} במזומן והשקעות קצרות מול חוב של ${fM(m.totalDebt)}. ${solvencyText(x)}`)
+    + P(`התזרים החופשי עומד על ${fM(m.fcf)} (מרווח ${fP(m.fcfMargin)}). ${c.sbc / Math.max(m.fcf, 1) > 0.5 && m.fcf > 0 ? `<b>חשוב:</b> תגמול מבוסס מניות של ${fM(c.sbc)} מהווה ${fP(c.sbc / m.fcf, 0)} מה-FCF — לאחר ניכויו התזרים "האמיתי" לבעלי המניות הוא ${fM(m.adjFcf)} בלבד.` : `לאחר ניכוי תגמול מבוסס מניות (${fM(c.sbc)}) נותר תזרים של ${fM(m.adjFcf)}.`} ציון הבריאות הפיננסית: ${h.score}/100${h.severe.length ? ` — <b class="neg">מסומנת כבעלת סיכון פיננסי חמור (${h.severe.join('; ')})</b>` : ''}.`);
+  const val = P(`שווי השוק הנוכחי ${fM(m.mcap)} (EV של ${fM(m.ev)}). מודל ה-DCF מעריך טווח שווי של בין ${num(f$(v.low))} ל-${num(f$(v.high))} למניה, עם תרחיש בסיס של ${f$(v.mid)}, לעומת מחיר של ${f$(c.price)}. ${v.mos >= 0.15 ? `המחיר נמוך בכ-${fP(v.mos, 0)} משווי הבסיס — מרווח ביטחון משמעותי.` : v.mos > 0 ? `מרווח הביטחון מצומצם (${fP(v.mos, 0)}).` : `המחיר גבוה משווי הבסיס — השוק מתמחר צמיחה או רווחיות גבוהות מהנחות הבסיס.`} ${v.reliabilityNote}`)
+    + P(`במכפילים, החברה נסחרת ב-EV/Revenue של ${fX(m.evRev)} ו-EV/FCF של ${fX(m.evFcf)}, ${isFinite(v.relDisc) ? (v.relDisc > 0 ? `בהנחה של כ-${fP(v.relDisc, 0)}` : `בפרמיה של כ-${fP(-v.relDisc, 0)}`) + ' לחציון הסקטור' : ''}${isFinite(v.histDisc) ? ` ו${v.histDisc > 0 ? `בהנחה של ${fP(v.histDisc, 0)}` : `בפרמיה של ${fP(-v.histDisc, 0)}`} למכפילים ההיסטוריים שלה` : ''}. ${v.parts.damp < 1 ? 'מאחר שהצמיחה נמוכה או שקיים דגל מבני, המערכת מפחיתה את המשקל של מכפילים נמוכים — ייתכן שהם משקפים הרעה אמיתית בעסק.' : ''} ${f.cls !== 'לא רלוונטי' ? `סיווג Fallen Angel: <b>${f.cls}</b> — ${f.why.join('; ')}.` : ''} פוטנציאל העלייה לשווי הכלכלי (${fPs(v.upside, 0)}) הוא אופק ארוך-טווח, ונפרד מהתשואה האפשרית סביב הדוח הקרוב.`);
+  const cat = P(c.earnOffset >= 0 ? `הדוח הבא ${c.confirmed ? 'מתוכנן' : 'משוער'} ל-${m.earningsDate} (${c.timing === 'AMC' ? 'אחרי המסחר' : 'לפני המסחר'}), בעוד ${c.earnOffset} ימים${c.confirmed ? '' : ' — התאריך טרם אושר ע"י החברה'}. הקונצנזוס מצפה ל-EPS של ${f$(c.epsEst)} ולהכנסות של ${fM(c.revEstQ)}. ${earningsText(x)}` : `החברה דיווחה לפני ${-c.earnOffset} ימים והמניה הגיבה ב-${c.lastReact > 0 ? '+' : ''}${c.lastReact}%. ${c.guidanceNote} מעקב מומנטום: ${x.mon.alerts.length ? x.mon.alerts.map(a => a.he).join(', ') : 'אין התראות פעילות'}.`);
+  const flags = c.news.length || r.unusual.length || m.dilutionRate > 0.02 ? P(`ציון הסיכון ${r.score}/100. ${c.news.map(n => `${n.title} (${n.status}, חומרה ${SEVL[n.sev][0]}, ${n.known ? 'ידוע לשוק' : 'מידע חדש'}) — ${n.impact}`).join(' ')} ${m.dilutionRate > 0.02 ? `מספר המניות גדל בקצב שנתי של ${fP(m.dilutionRate)}. ` : ''}${dilutionText(x)}. ${r.unusual.length ? `נרשמו מכירות חריגות של בעלי עניין מחוץ לתוכנית מתוכננת (${r.unusual.map(i => i.who + ' $' + i.val + 'M').join(', ')}) — מצדיק בירור אך אינו בהכרח סימן שלילי.` : ''} ${r.override ? `<b>${r.override.reason}.</b>` : ''}`) : P(`לא אותרו דגלים אדומים מהותיים בנתוני ההדגמה. ציון סיכון: ${r.score}/100.`);
+  const best = [...t.A, ...t.B, ...t.C].filter(z => z.n >= 3).sort((a, b) => b.riskAdj - a.riskAdj)[0];
+  const ent = P(t.n < 8 ? `קיימים רק ${t.n} דוחות היסטוריים — אין מספיק נתונים להשוואה אמינה בין חלונות החזקה.` : `בבדיקה היסטורית (סינתטית) על ${t.n} דוחות, ${best ? `החלון "${best.label}" הציג את יחס התשואה/סיכון הגבוה ביותר (ממוצע ${fPs(best.avg, 2)}, Win Rate ${fP(best.win, 0)})` : 'לא נמצא חלון עדיף'}. עם מדגם קטן כזה אין להסיק יתרון מובהק. תרחיש חיובי: עקיפת תחזיות לצד העלאת תחזית שנתית. תרחיש שלילי: החטאה בהכנסות או תחזית מונמכת${e.priced ? '' : ''}. יש לבחון מחדש החזקה אם התחזית מונמכת, אם המניה שוברת את ממוצע 50 יום, או אם המחיר מתקרב לשווי הבסיס.`);
+  const finalT = P(`<b>${x.fin.cls}.</b> ${finalReason(x)}`);
+  return [['סקירת החברה', 'Company Overview', overview], ['מצב פיננסי', 'Financial Position', fin], ['הערכת שווי', 'Valuation Assessment', val], ['קטליזטור הדוח', 'Earnings Catalyst', cat], ['דגלים אדומים', 'Red Flags', flags], ['תרחישי כניסה ויציאה', 'Entry & Exit Scenarios', ent], ['הערכה סופית', 'Final Assessment', finalT]];
+}
+function finalReason(x) {
+  const { h, v, e, r, fin } = x;
+  if (fin.idx === 3) return r.override && r.override.level === 'disqualify' ? `החברה נפסלה ע"י מנגנון ה-Risk Override (${r.override.reason.replace('Risk Override: ', '')}), ללא קשר לציוני התמחור וההזדמנות.` : `ציון הבריאות הפיננסית (${h.score}) נמוך מסף הסינון של 45 — המערכת אינה ממשיכה לבחון הזדמנויות דוח בחברות חלשות פיננסית.`;
+  let s = `הציון המשוקלל ${fin.composite} (35% בריאות, 35% תמחור, 20% הזדמנות דוח, 10% היפוך סיכון). `;
+  s += fin.idx === 0 ? `שילוב של איתנות פיננסית (${h.score}), מרווח ביטחון של ${fP(v.mos, 0)} וסיכון מתון (${r.score}) מצדיק מחקר מעמיק — לא החלטת השקעה.` : fin.idx === 1 ? (fin.capped ? `הדירוג הוגבל: ${fin.capReason}.` : `החברה עומדת בתנאי האיכות, אך ${v.mos < 0.15 ? 'מרווח הביטחון אינו מספק' : 'הסיכון או ההזדמנות אינם מספיקים'} לעדיפות גבוהה.`) : 'האותות מעורבים: חלק מהמדדים תומכים וחלקם לא, ואין ביסוס מספיק להמשך מחקר בעדיפות.';
+  return s;
+}
+
+/* ===== 9. VALIDATION ===== */
+function vValidation() {
+  const w = walkForward(S.data, S.costBps);
+  const row = (name, s) => `<tr><td>${name}</td><td class="n">${num(s.nAll)}</td><td class="n">${num(s.nSig)}</td><td class="n">${num(fPs(s.base, 2))}</td><td class="n">${num(fPs(s.sig, 2))}</td><td class="n ${s.edge < 0 ? 'neg' : 'pos'}">${num(fPs(s.edge, 2))}</td><td class="n">${num(fN(s.t))}</td></tr>`;
+  const verdict = Math.abs(w.oos.t) >= 2 && w.oos.edge > 0 ? 'יתרון חיובי מחוץ למדגם — עדיין נדרש אימות על נתונים אמיתיים.' : 'המודל אינו מציג יתרון מובהק על אסטרטגיית הייחוס (החזקה בכל הדוחות). אין להציגו כמוצלח.';
+  const checks = [['Out-of-Sample Testing', 'מיושם: רבעונים 5–6 בתוך המדגם, 7–8 מחוץ למדגם', 'ok'], ['Walk-Forward Validation', 'מיושם: הכלל משתמש רק ברבעונים שקדמו לאירוע', 'ok'], ['Look-Ahead Bias', 'כלל ההחלטה Point-in-Time. הציונים הנוכחיים אינם Point-in-Time ולכן לא נבחנים כאן', 'ok'], ['Transaction Costs / Slippage / Spread', `מיושם: ${S.costBps} bps לכל צד (ניתן לשינוי במסך חלונות כניסה)`, 'ok'],
+    ['Survivorship Bias', 'לא ישים בהדגמה. ב-Production: יקום היסטורי הכולל חברות שנמחקו (Delisted) — Massive/Sharadar', 'todo'], ['Corporate Actions', 'ב-Production: מחירים מתואמים לפיצולים ודיבידנדים', 'todo'], ['Earnings Announcement Timing', 'מיושם במודל: יום 0 = המסחר הראשון אחרי AMC/BMO', 'ok'], ['5–10 שנות היסטוריה', 'הדגמה: 8 רבעונים. ב-Production: 20–40 רבעונים לחברה', 'todo'], ['ייחוס מתאים', 'ייחוס נוכחי: כל אירועי הדוח. ב-Production: גם תשואת ETF סקטוריאלי לאותו חלון', 'todo']];
+  const g = (title, arr) => `<h3>${title}</h3><div class="tw"><table><thead><tr><th>קבוצה</th><th class="n">אירועים</th><th class="n">אותות</th><th class="n">ייחוס</th><th class="n">אות</th><th class="n">יתרון</th><th class="n">t</th></tr></thead><tbody>${arr.map(z => row(z.k, z)).join('')}</tbody></table></div>`;
+  return panel('אימות מודלים — Backtesting & Walk-Forward', `<div class="alert warn">הבדיקה רצה על מסלולי מחיר <b>סינתטיים</b>. היא מדגימה את מנגנון האימות — לא את איכות המודל. רק הרצה על נתונים אמיתיים יכולה לאמת או להפריך אותו.</div>
+    <p class="txt">כלל ההחלטה הנבדק: להחזיק את אסטרטגיה B (כניסה 7 ימים לפני, יציאה יום אחרי) רק כאשר החברה עקפה תחזיות ב-60% או יותר מהרבעונים <b>שקדמו</b> לאירוע (מינימום 4). ייחוס: החזקה בכל אירועי הדוח.</p>
+    <div class="tw"><table><thead><tr><th>מדגם</th><th class="n">אירועים</th><th class="n">אותות</th><th class="n">ייחוס</th><th class="n">אות</th><th class="n">יתרון</th><th class="n">t</th></tr></thead><tbody>${row('In-Sample', w.ins)}${row('Out-of-Sample', w.oos)}</tbody></table></div>
+    <div class="alert ${Math.abs(w.oos.t) >= 2 && w.oos.edge > 0 ? 'okk' : 'crit'}"><b>מסקנה:</b> ${verdict}</div>
+    <div class="split"><div>${g('לפי סקטור', w.bySector)}</div><div>${g('לפי גודל חברה', w.byCap)}${g('לפי תנודתיות', w.byVol)}</div></div>
+    <p class="note">מצב שוק (Bull/Bear) אינו ניתן לפילוח בנתונים הסינתטיים; ב-Production הפילוח נעשה לפי מגמת S&P 500 ו-VIX במועד האירוע.</p>`)
+    + panel('בדיקות הטיה ותקפות', `<div class="tw"><table><thead><tr><th>בדיקה</th><th>סטטוס</th><th>פירוט</th></tr></thead><tbody>${checks.map(([k, d, s]) => `<tr><td class="en">${k}</td><td>${s === 'ok' ? '<span class="tag tag-ok">✓ מיושם</span>' : '<span class="tag tag-est">◷ Production</span>'}</td><td class="small">${d}</td></tr>`).join('')}</tbody></table></div>`);
+}
+
+/* ===== 10. METHODOLOGY ===== */
+function vMethod() {
+  const src = [['SEC EDGAR', 'דוחות כספיים (XBRL companyfacts), Form 4, 8-K, S-3/424B', 'חינם; מחייב User-Agent מזהה ומגבלת 10 בקשות לשנייה', 'מקור ראשוני ואמין ביותר לנתונים פונדמנטליים ולבעלי עניין'],
+    ['Financial Modeling Prep', 'דוחות מתוקננים, מכפילים, תחזיות אנליסטים, לוח דוחות', 'תוכנית חינמית מוגבלת; תחזיות והיסטוריה ארוכה בתשלום', 'נוח לשלב 1; לאמת מול EDGAR'],
+    ['Finnhub', 'לוח דוחות, הפתעות EPS, חדשות, בעלי עניין', 'חינם: 60 קריאות/דקה; לוח דוחות לחודש קדימה, 4 רבעוני הפתעה', 'מתאים לסריקה; 8 רבעונים דורשים תוכנית בתשלום או חישוב מ-EDGAR'],
+    ['Massive (לשעבר Polygon.io)', 'מחירים יומיים מתואמים, נפח, Corporate Actions', 'חינם: 5 קריאות/דקה, נתוני סוף יום; Starter בתשלום', 'מקור המחירים ל-Backtest; ה-API הישן api.polygon.io עדיין פעיל'],
+    ['Alpha Vantage', 'מחירים, דוחות בסיסיים, לוח דוחות (CSV)', 'מכסה יומית נמוכה בחינם', 'גיבוי'],
+    ['Nasdaq Earnings Calendar', 'תאריכי דוחות', 'אתר ציבורי; תנאי שימוש מגבילים גרידה', 'לאימות תאריכים בלבד; עדיף אישור IR של החברה']];
+  return panel('נתונים ומתודולוגיה', `<h3>ארבע שכבות מידע — מופרדות בכל מסך</h3><div class="layers">${[['RAW', 'נתונים גולמיים', 'כפי שהתקבלו מהספק, עם מקור וחותמת זמן'], ['CALC', 'חישובים', 'יחסים ומכפילים שחושבו באופן דטרמיניסטי מהנתונים הגולמיים'], ['MODEL', 'הערכות מודל', 'ציונים, DCF, Backtest — תלויים בהנחות'], ['AI', 'פרשנות', 'טקסט הסקירה — נגזר מהשכבות שמעליו ואינו מוסיף נתונים']].map(([k, h, d]) => `<div>${SRC(k)}<b>${h}</b><small>${d}</small></div>`).join('')}</div>
+    <h3>מקורות נתונים מומלצים ל-Production</h3><div class="tw"><table><thead><tr><th>ספק</th><th>מה מספק</th><th>זמינות ועלות</th><th>שימוש במערכת</th></tr></thead><tbody>${src.map(r => `<tr>${r.map((z, i) => `<td class="${i === 0 ? 'en' : 'small'}">${z}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    <p class="note">מגבלות ומחירים משתנים — יש לאמת בדף התמחור של כל ספק לפני בחירה.</p>
+    <h3>נוסחאות עיקריות</h3><div class="tw"><table><tbody>${[['ציון בריאות (0–100)', 'איתנות מאזן 20 · נזילות 15 · רווחיות 20 · איכות תזרים בניכוי SBC 20 · יציבות הכנסות 10 · יכולת פירעון 15'],
+      ['ציון תמחור', '50% Margin of Safety מול DCF בסיס · 25% הנחה מול עמיתים · 25% הנחה מול היסטוריה (מופחת כשהצמיחה נמוכה מ-3% או כשיש דגל מבני)'],
+      ['ציון הזדמנות דוח', 'עקיפות 25 · גודל הפתעה 10 · עדכוני אנליסטים 20 · תחזית הנהלה 10 · ציפיות לא מתומחרות 15 · תגובות עבר 10 · פוטנציאל הערכה מחודשת 10'],
+      ['ציון סיכון', 'דגלים (חומרה × סטטוס × חדשות) + דילול + ATM/Shelf + מכירות חריגות + פער בריאות + תנודתיות'],
+      ['Risk Override', 'דגל קריטי מאומת או ציון סיכון מעל 70 ← פסילה · סיכון פיננסי חמור או אירוע חדש בחומרה גבוהה ← הגבלה ל"מועמדת למעקב"'],
+      ['הערכה סופית', 'בריאות מתחת ל-45 ← לא עומדת בסינון · משוקלל ≥65 + MoS ≥15% + סיכון <50 ← עדיפות גבוהה · משוקלל ≥55 וציון תמחור ≥40 ← מעקב · אחרת ← לא ודאית · סימני Value Trap מגבילים ל"מעקב"']].map(([k, d]) => `<tr><th>${k}</th><td class="small">${d}</td></tr>`).join('')}</tbody></table></div>
+    <h3>מגבלות המודל</h3><p class="txt">כל המשקלות והספים הם הנחות עבודה שנקבעו מראש, ולא תוצאה של אופטימיזציה. יש לכייל אותם רק בתהליך Walk-Forward על נתונים אמיתיים. ה-DCF רגיש מאוד ל-WACC ולצמיחה הטרמינלית. המכפילים הסקטוריאליים בהדגמה בדיוניים. המערכת אינה חוזה מחירים ואינה מספקת ייעוץ השקעות.</p>`);
+}
+
+/* ---------- exports ---------- */
+let DL = null;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 3500); }
+async function saveFile(filename, data) {
+  if (!DL) { toast('ההורדה אינה זמינה בתצוגה זו.'); return; }
+  try { await DL.save({ filename, data }); } catch (e) { toast(e && e.code === 'declined' ? 'ההורדה בוטלה.' : 'ההורדה נכשלה: ' + (e && (e.message || e.code))); }
+}
+function scannerRows(list) {
+  return list.map(x => ({ 'DATA': 'DEMO — SYNTHETIC', Company: x.c.name, Ticker: x.c.ticker, Exchange: x.c.exch, Sector: x.c.sector, Price: x.c.price, 'Market Cap ($M)': Math.round(x.m.mcap), 'EV ($M)': Math.round(x.m.ev), 'Next Earnings': x.m.earningsDate, 'Date Status': x.c.confirmed ? 'Confirmed' : 'Estimated', 'Days Until': x.c.earnOffset,
+    'Revenue ($M)': x.m.revenue, 'Net Income ($M)': x.c.netIncome, 'FCF ($M)': x.m.fcf, 'FCF after SBC ($M)': x.m.adjFcf, 'Health Score': x.h.score, 'Valuation Score': x.v.score, 'Earnings Score': x.e.score, 'Risk Score': x.r.score,
+    'FV Low': +x.v.low.toFixed(2), 'FV Base': +x.v.mid.toFixed(2), 'FV High': +x.v.high.toFixed(2), 'Assessment': x.fin.cls, 'Source': DEMO_SOURCE, 'As Of': SNAPSHOT_DATE }));
+}
+function exportScanner() {
+  if (typeof XLSX === 'undefined') { toast('ספריית Excel לא נטענה.'); return; }
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(scannerRows(sorted(filtered()))), 'Scanner (DEMO)');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['DEMO DATA — fictional companies and synthetic numbers. Not market data. Not investment advice.'], ['Snapshot', SNAPSHOT_DATE]]), 'Disclaimer');
+  saveFile(`EVI_scanner_DEMO_${SNAPSHOT_DATE}.xlsx`, new Uint8Array(XLSX.write(wb, { type: 'array', bookType: 'xlsx' })));
+}
+function exportCompanyXlsx() {
+  if (typeof XLSX === 'undefined') { toast('ספריית Excel לא נטענה.'); return; }
+  const x = byId(S.sel), wb = XLSX.utils.book_new();
+  const metrics = Object.entries(x.m).filter(([, v]) => typeof v === 'number').map(([k, v]) => ({ Metric: k, Value: isFinite(v) ? v : String(v), Layer: 'CALC', Source: DEMO_SOURCE, AsOf: SNAPSHOT_DATE }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(scannerRows([x])), 'Summary');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(metrics), 'Metrics');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(x.v.base.rows.map(r => ({ Year: r.t, Growth: r.g, 'Revenue ($M)': r.rev, 'FCF Margin': r.margin, 'FCF ($M)': r.fcf, 'PV ($M)': r.pv }))), 'DCF Base');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([...x.t.A, ...x.t.B, ...x.t.C].map(r => ({ Window: r.label, N: r.n, Avg: r.avg, Median: r.med, WinRate: r.win, MaxDD: r.maxDD, Vol: r.vol, Confidence: r.conf }))), 'Timing (synthetic)');
+  saveFile(`EVI_${x.c.ticker}_DEMO.xlsx`, new Uint8Array(XLSX.write(wb, { type: 'array', bookType: 'xlsx' })));
+}
+async function exportPDF() {
+  if (typeof html2canvas === 'undefined' || !window.jspdf) { toast('ספריות PDF לא נטענו.'); return; }
+  toast('מכין PDF…');
+  const el = $('#reportBody'), canvas = await html2canvas(el, { backgroundColor: '#111214', scale: 1.5 });
+  const { jsPDF } = window.jspdf, pdf = new jsPDF({ unit: 'pt', format: 'a4' }), W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight();
+  const ih = canvas.height * W / canvas.width; let y = 0; const img = canvas.toDataURL('image/jpeg', 0.85);
+  while (y < ih) { pdf.addImage(img, 'JPEG', 0, -y, W, ih); y += H; if (y < ih) pdf.addPage(); }
+  saveFile(`EVI_${byId(S.sel).c.ticker}_report_DEMO.pdf`, pdf.output('blob'));
+}
+
+/* ---------- boot ---------- */
+recompute();
+window.addEventListener('hashchange', route);
+route();
+(async () => {
+  for (let i = 0; i < 20 && !(window.claude && window.claude.use); i++) await new Promise(r => setTimeout(r, 150));
+  try { if (window.claude && window.claude.use) DL = await window.claude.use('downloads'); } catch (e) { DL = null; }
+  document.body.classList.toggle('nodl', !DL);
+})();
+</script>
+</body>
+</html>

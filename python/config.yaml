@@ -1,0 +1,60 @@
+# Earnings Value Intelligence — configuration (no secrets here; API keys go in .env)
+universe:
+  mode: auto            # auto = Finnhub earnings calendar if FINNHUB_API_KEY is set, otherwise the list below
+  exchanges: [Nasdaq, NYSE]
+  list_file: data/universe.csv
+  max_companies_per_scan: 60
+
+scan:
+  days_min: 7
+  days_max: 30
+
+cache:
+  path: data/evi.sqlite
+  ttl_hours: {tickers: 168, submissions: 12, companyfacts: 24, form4: 720}
+
+edgar:
+  rate_limit_per_sec: 8      # SEC fair-access limit is 10/s
+
+finnhub:
+  rate_limit_per_sec: 0.9    # free plan: 60 calls/minute
+
+prices:
+  providers: [massive, yfinance]   # order of preference; each needs its key / opt-in in .env
+  massive_base_url: https://api.massive.com
+  history_years: 6
+  benchmark: SPY
+
+valuation:
+  terminal_growth: 0.025
+  years: 10
+  base_wacc: 0.085
+  default_wacc_no_prices: 0.095
+  target_margin_if_negative: 0.12
+  min_peers: 3
+
+scores:
+  health_min_coverage: 0.6
+  earnings_min_coverage: 0.5
+
+risk:
+  unusual_insider_sale_usd: 5000000
+  disqualify_score: 70
+  known_after_days: 30
+  insider_lookback_days: 180
+  max_form4_docs: 40
+
+classification:
+  min_health: 45
+  high_priority_composite: 65
+  high_priority_mos: 0.15
+  watch_composite: 55
+  watch_min_valuation: 40
+
+backtest:
+  cost_bps_per_side: 15
+  min_events: 8
+  max_years: 10
+
+alerts:
+  score_change: 10
