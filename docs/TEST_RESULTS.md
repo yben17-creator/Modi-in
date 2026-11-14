@@ -4,4 +4,5 @@
 |---|---|---|---|
 | 2026-11-14 | `python/` pytest | 11/11 עוברות | נתוני בדיקה בפורמט SEC/Finnhub/Massive; ללא רשת |
 | 2026-11-14 | `python/` מסכי Streamlit | 10/10 רצים ללא שגיאה | הורץ עם תחליף מדומה ל-Streamlit, לא עם הספרייה |
+| 2026-11-14 | `engine-ts` parity (TS מול Python) | 294/294 | xbrl + metrics + health |
 | — | נתונים חיים | לא נבדק | |
