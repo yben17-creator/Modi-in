@@ -21,7 +21,7 @@ export const missing = (why: string, source = ""): Val => ({ value: null, source
 
 export function calc(value: number | null, source: string, inputs: (Val | undefined)[] = [], note = ""): Val {
   const dates = inputs.filter((i): i is Val => !!i && !!i.asOf).map((i) => i.asOf as string).sort();
-  const asOf = dates.length ? dates[0] : null;
+  const asOf = dates.length ? (dates[0] ?? null) : null;
   if (value === null || value === undefined || Number.isNaN(value)) {
     const miss = inputs.filter((i): i is Val => !!i && !ok(i)).map((i) => i.note || i.source).filter(Boolean);
     return { value: null, source, asOf, layer: "CALC", note: note || "חסר קלט: " + miss.join("; ") };

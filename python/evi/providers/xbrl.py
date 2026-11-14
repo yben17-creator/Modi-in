@@ -199,6 +199,38 @@ def instant_series(cf: dict, tags: list[str], unit: str = "USD", taxonomy: str =
     return [merged[k] for k in sorted(merged)]
 
 
+# ------------------------------------------------------------------ stock splits / staleness
+SPLIT_FACTORS = [1.5, 2, 3, 4, 5, 6, 7, 8, 10, 15, 20, 25, 30, 40, 50]
+BALANCE_SHEET_KEYS = ["cash", "st_investments", "receivables", "inventory", "current_assets", "current_liabilities",
+                      "st_debt", "lt_debt_noncurrent", "lt_debt_total", "convertible_debt", "total_liabilities", "equity"]
+STALE_PREFIX = "ישן:"
+
+
+def adjust_for_splits(series: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Detect splits as jumps between consecutive share counts matching a split ratio within 4%; restate earlier values."""
+    out = [dict(p) for p in series]
+    splits = []
+    for i in range(1, len(out)):
+        prev, cur = out[i - 1], out[i]
+        if not (prev["val"] > 0 and cur["val"] > 0):
+            continue
+        r = cur["val"] / prev["val"]
+        probe = r if r >= 1.4 else (1 / r if r <= 0.7 else 0)
+        if not probe:
+            continue
+        k = SPLIT_FACTORS[0]
+        for f in SPLIT_FACTORS:
+            if abs(probe / f - 1) < abs(probe / k - 1):
+                k = f
+        if abs(probe / k - 1) > 0.04:
+            continue
+        factor = k if r >= 1 else 1 / k
+        for j in range(i):
+            out[j]["val"] *= factor
+        splits.append({"date": cur["end"], "factor": factor})
+    return out, splits
+
+
 # ------------------------------------------------------------------ public API
 def extract(cf: dict, fetched: str | None = None) -> dict[str, Any]:
     """Return {'fin': {key: Val}, 'annual': {...}, 'quarterly': {...}, 'maturities': [...], 'gaps': [...]}."""
@@ -244,6 +276,14 @@ def extract(cf: dict, fetched: str | None = None) -> dict[str, Any]:
         r = instant_latest(cf, tags, unit)
         put_val(key, float(r["val"]) if r else None, r["end"] if r else None, r["tag"] if r else None)
 
+    # balance-sheet components last reported well before the latest balance sheet are stale — never mix periods
+    ref = fin["total_assets"].as_of or fin["current_assets"].as_of
+    if ref:
+        for k in BALANCE_SHEET_KEYS:
+            cur = fin[k]
+            if cur.ok and cur.as_of and (_d(ref) - _d(cur.as_of)).days > 100:
+                fin[k] = missing(f"{STALE_PREFIX} הערך האחרון מדווח ל-{cur.as_of}, ישן מתאריך המאזן {ref} — לא נכלל", SRC)
+
     # liabilities fallback (some filers do not tag total Liabilities)
     if not fin["total_liabilities"].ok and fin["liabilities_and_equity"].ok and fin["equity"].ok \
             and fin["liabilities_and_equity"].as_of == fin["equity"].as_of:
@@ -262,7 +302,9 @@ def extract(cf: dict, fetched: str | None = None) -> dict[str, Any]:
         fin["lt_debt"] = missing("לא דווח חוב לזמן ארוך בתגי XBRL (ייתכן שאין חוב)", SRC)
 
     # shares
-    so = instant_series(cf, ["EntityCommonStockSharesOutstanding"], "shares", "dei")
+    so, splits = adjust_for_splits(instant_series(cf, ["EntityCommonStockSharesOutstanding"], "shares", "dei"))
+    split_note = ("מותאם לפיצול מניות: " + ", ".join(
+        f"{x['factor'] if x['factor'] >= 1 else '1/' + str(round(1 / x['factor']))}:1 ב-{x['date']}" for x in splits)) if splits else ""
     if so:
         fin["shares_outstanding"] = Val(so[-1]["val"], source=f"{SRC} · dei:EntityCommonStockSharesOutstanding",
                                         as_of=so[-1]["end"], fetched=fetched)
@@ -270,7 +312,7 @@ def extract(cf: dict, fetched: str | None = None) -> dict[str, Any]:
         old = min(so, key=lambda r: abs((_d(r["end"]) - target).days))
         if abs((_d(old["end"]) - target).days) <= 120:
             fin["shares_outstanding_3y"] = Val(old["val"], source=f"{SRC} · dei:EntityCommonStockSharesOutstanding",
-                                               as_of=old["end"], fetched=fetched)
+                                               as_of=old["end"], layer="CALC" if splits else "RAW", note=split_note, fetched=fetched)
         else:
             fin["shares_outstanding_3y"] = missing("אין נתון מניות מלפני ~3 שנים", SRC)
     else:
@@ -286,6 +328,11 @@ def extract(cf: dict, fetched: str | None = None) -> dict[str, Any]:
         fin["diluted_shares"] = Val(da[-1]["val"], source=f"{SRC} · WeightedAverageNumberOfDilutedSharesOutstanding (שנתי)",
                                     as_of=da[-1]["end"], fetched=fetched) if da else missing("מניות בדילול מלא חסרות", SRC)
     annual["diluted_shares"] = annual_series(cf, ["WeightedAverageNumberOfDilutedSharesOutstanding"], "shares")
+    for sp in splits:
+        post = next((q for q in annual["diluted_shares"] if q["end"] >= sp["date"]), None)
+        for p in annual["diluted_shares"]:
+            if post and p["end"] < sp["date"] and abs(p["val"] * sp["factor"] / post["val"] - 1) < abs(p["val"] / post["val"] - 1):
+                p["val"] *= sp["factor"]
     annual["shares_outstanding"] = so
 
     # EPS (quarterly, diluted) — reported actuals
@@ -329,4 +376,5 @@ def extract(cf: dict, fetched: str | None = None) -> dict[str, Any]:
     for k in ("revenue", "operating_income", "net_income", "ocf", "capex", "cash", "current_assets", "current_liabilities", "equity"):
         if not fin[k].ok:
             gaps.append(f"{k}: {fin[k].note}")
-    return {"fin": fin, "annual": annual, "quarterly": quarterly, "maturities": mats, "maturities_as_of": mat_as_of, "gaps": gaps}
+    return {"fin": fin, "annual": annual, "quarterly": quarterly, "maturities": mats, "maturities_as_of": mat_as_of, "gaps": gaps,
+            "splits": splits}

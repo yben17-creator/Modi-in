@@ -128,4 +128,5 @@ class CompanyData:
     errors: list[str] = field(default_factory=list)
 
     def f(self, key: str) -> Val:
-        return self.fin.get(key) or missing("לא נמצא בדיווחי XBRL")
+        val = self.fin.get(key)
+        return val if val is not None else missing("לא נמצא בדיווחי XBRL")

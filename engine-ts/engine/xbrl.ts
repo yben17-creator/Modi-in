@@ -59,14 +59,14 @@ const MATURITY_TAGS: [string, number][] = [
   ["LongTermDebtMaturitiesRepaymentsOfPrincipalAfterYearFive", 6],
 ];
 
-export interface Fact { start?: string; end: string; val: number; filed?: string; form?: string; fy?: number; fp?: string; tag: string }
-export interface Period { start?: string; end: string; val: number; tag: string; how?: string; filed?: string; form?: string }
+export interface Fact { start?: string | undefined; end: string; val: number; filed?: string | undefined; form?: string | undefined; fy?: number | undefined; fp?: string | undefined; tag: string }
+export interface Period { start?: string | undefined; end: string; val: number; tag: string; how?: string | undefined; filed?: string | undefined; form?: string | undefined }
 
 // deno-lint-ignore no-explicit-any
 type CompanyFacts = any;
 
 const toDay = (s: string) => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / 86400000;
-const days = (r: { start?: string; end: string }): number | null => (r.start ? toDay(r.end) - toDay(r.start) : null);
+const days = (r: { start?: string | undefined; end: string }): number | null => (r.start ? toDay(r.end) - toDay(r.start) : null);
 
 function units(cf: CompanyFacts, tag: string, taxonomy = "us-gaap"): Record<string, Fact[]> {
   return cf?.facts?.[taxonomy]?.[tag]?.units ?? {};
@@ -75,8 +75,8 @@ function rows(cf: CompanyFacts, tag: string, unit = "USD", taxonomy = "us-gaap")
   return (units(cf, tag, taxonomy)[unit] ?? []).filter((r: Fact) => "val" in r && "end" in r).map((r: Fact) => ({ ...r, tag }));
 }
 // Python: max(rows, key=(filed, form != "10-K/A")) — later filing wins; ties prefer non-amendment.
-function latestFiled<T extends { filed?: string; form?: string }>(rs: T[]): T {
-  let best = rs[0];
+function latestFiled<T extends { filed?: string | undefined; form?: string | undefined }>(rs: T[]): T {
+  let best = rs[0]!;
   for (const r of rs.slice(1)) {
     const a = r.filed ?? "", b = best.filed ?? "";
     if (a > b || (a === b && (r.form !== "10-K/A") && best.form === "10-K/A")) best = r;
@@ -100,7 +100,7 @@ export function annualSeries(cf: CompanyFacts, tags: string[], unit = "USD"): Pe
       }
     }
   }
-  return sortedKeys(merged).map((k) => merged[k]);
+  return sortedKeys(merged).map((k) => merged[k]!);
 }
 
 export function quarterlySeries(cf: CompanyFacts, tags: string[], unit = "USD"): Period[] {
@@ -111,7 +111,7 @@ export function quarterlySeries(cf: CompanyFacts, tags: string[], unit = "USD"):
     const uniq: Record<string, Fact> = {};
     for (const r of all) {
       const k = `${r.start}|${r.end}`;
-      if (!(k in uniq) || (r.filed ?? "") > (uniq[k].filed ?? "")) uniq[k] = r;
+      if (!(k in uniq) || (r.filed ?? "") > (uniq[k]!.filed ?? "")) uniq[k] = r;
     }
     const rs = Object.values(uniq);
     const q: Record<string, Period> = {};
@@ -129,7 +129,7 @@ export function quarterlySeries(cf: CompanyFacts, tags: string[], unit = "USD"):
     for (const group of Object.values(byStart)) {
       group.sort((a, b) => (a.end < b.end ? -1 : a.end > b.end ? 1 : 0));
       for (let i = 1; i < group.length; i++) {
-        const prev = group[i - 1], cur = group[i];
+        const prev = group[i - 1]!, cur = group[i]!;
         const diff = days(cur)! - days(prev)!;
         if (diff >= 80 && diff <= 100 && !(cur.end in q)) {
           q[cur.end] = { start: prev.end, end: cur.end, val: Number(cur.val) - Number(prev.val), tag, how: "ytd-diff" };
@@ -143,22 +143,22 @@ export function quarterlySeries(cf: CompanyFacts, tags: string[], unit = "USD"):
       const inside = Object.values(q).filter((x) => (x.start ?? "") >= r.start! && x.end < r.end)
         .sort((a, b) => (a.end < b.end ? -1 : 1));
       if (inside.length === 3) {
-        q[r.end] = { start: inside[2].end, end: r.end, val: Number(r.val) - inside.reduce((s, x) => s + x.val, 0), tag, how: "fy-minus-3q" };
+        q[r.end] = { start: inside[2]!.end, end: r.end, val: Number(r.val) - inside.reduce((s, x) => s + x.val, 0), tag, how: "fy-minus-3q" };
       }
     }
     for (const [end, item] of Object.entries(q)) if (!(end in merged)) merged[end] = item;
   }
-  return sortedKeys(merged).map((k) => merged[k]);
+  return sortedKeys(merged).map((k) => merged[k]!);
 }
 
 export function ttm(quarters: Period[], offset = 0): { value: number | null; end: string | null; note: string } {
   if (quarters.length < 4 + offset) return { value: null, end: null, note: "פחות מ-4 רבעונים רציפים" };
   const w = quarters.slice(quarters.length - 4 - offset, quarters.length - offset);
   for (let i = 1; i < w.length; i++) {
-    const gap = w[i].start ? toDay(w[i].start!) - toDay(w[i - 1].end) : 999;
+    const gap = w[i]!.start ? toDay(w[i]!.start!) - toDay(w[i - 1]!.end) : 999;
     if (gap > 12 || gap < -12) return { value: null, end: null, note: "רבעונים לא רציפים" };
   }
-  return { value: w.reduce((s, x) => s + x.val, 0), end: w[3].end, note: "TTM" };
+  return { value: w.reduce((s, x) => s + x.val, 0), end: w[3]!.end, note: "TTM" };
 }
 
 export function instantLatest(cf: CompanyFacts, tags: string[], unit = "USD", taxonomy = "us-gaap"): Fact | null {
@@ -182,8 +182,34 @@ export function instantSeries(cf: CompanyFacts, tags: string[], unit = "USD", ta
       if (!(end in merged)) { const b = latestFiled(rs); merged[end] = { end, val: Number(b.val), tag, filed: b.filed }; }
     }
   }
-  return sortedKeys(merged).map((k) => merged[k]);
+  return sortedKeys(merged).map((k) => merged[k]!);
 }
+
+// ---- stock splits: a jump between consecutive share counts that matches a split ratio within 4%
+const SPLIT_FACTORS = [1.5, 2, 3, 4, 5, 6, 7, 8, 10, 15, 20, 25, 30, 40, 50];
+export interface SplitEvent { date: string; factor: number }
+
+export function adjustForSplits(series: Period[]): { series: Period[]; splits: SplitEvent[] } {
+  const out = series.map((p) => ({ ...p }));
+  const splits: SplitEvent[] = [];
+  for (let i = 1; i < out.length; i++) {
+    const prev = out[i - 1]!, cur = out[i]!;
+    if (!(prev.val > 0) || !(cur.val > 0)) continue;
+    const r = cur.val / prev.val;
+    const probe = r >= 1.4 ? r : r <= 0.7 ? 1 / r : 0;
+    if (!probe) continue;
+    const k = SPLIT_FACTORS.reduce((b, f) => (Math.abs(probe / f - 1) < Math.abs(probe / b - 1) ? f : b), SPLIT_FACTORS[0]!);
+    if (Math.abs(probe / k - 1) > 0.04) continue;
+    const factor = r >= 1 ? k : 1 / k;
+    for (let j = 0; j < i; j++) out[j]!.val *= factor;
+    splits.push({ date: cur.end, factor });
+  }
+  return { series: out, splits };
+}
+
+const BALANCE_SHEET_KEYS = ["cash", "st_investments", "receivables", "inventory", "current_assets", "current_liabilities",
+  "st_debt", "lt_debt_noncurrent", "lt_debt_total", "convertible_debt", "total_liabilities", "equity"];
+export const STALE_PREFIX = "ישן:";
 
 export interface Extracted {
   fin: Record<string, Val>;
@@ -192,6 +218,7 @@ export interface Extracted {
   maturities: { year: number | string; amount: number; tag: string }[];
   maturitiesAsOf: string | null;
   gaps: string[];
+  splits: SplitEvent[];
 }
 
 export function extract(cf: CompanyFacts, fetched: string | null = null): Extracted {
@@ -199,6 +226,7 @@ export function extract(cf: CompanyFacts, fetched: string | null = null): Extrac
   const annual: Record<string, Period[]> = {};
   const quarterly: Record<string, Period[]> = {};
   const gaps: string[] = [];
+  const g = (k: string): Val => fin[k] ?? missing("לא נמצא", SRC);
   const put = (key: string, value: number | null, end: string | null, tag: string | null, note = "") => {
     fin[key] = value === null ? missing(note || "לא נמצא תג XBRL מתאים", SRC)
       : { value, source: `${SRC} · ${tag}`, asOf: end, layer: "RAW", note, fetched };
@@ -220,9 +248,9 @@ export function extract(cf: CompanyFacts, fetched: string | null = null): Extrac
     } else { put(key, null, null, null); put(key + "_prev", null, null, null); }
   }
 
-  const rv = fin.revenue, cr = fin.cost_of_revenue;
-  if (fin.gross_profit.value === null && rv.value !== null && cr.value !== null && rv.asOf === cr.asOf) {
-    fin.gross_profit = { value: rv.value - cr.value, source: `${SRC} · Revenue − CostOfRevenue`, asOf: rv.asOf, layer: "CALC", note: "", fetched };
+  const rv = g("revenue"), cr = g("cost_of_revenue");
+  if (g("gross_profit").value === null && rv.value !== null && cr.value !== null && rv.asOf === cr.asOf) {
+    fin["gross_profit"] = { value: rv.value - cr.value, source: `${SRC} · Revenue − CostOfRevenue`, asOf: rv.asOf, layer: "CALC", note: "", fetched };
   }
 
   for (const [key, tags] of Object.entries(INSTANT_TAGS)) {
@@ -230,44 +258,56 @@ export function extract(cf: CompanyFacts, fetched: string | null = null): Extrac
     const r = instantLatest(cf, tags, unit);
     put(key, r ? Number(r.val) : null, r ? r.end : null, r ? r.tag : null);
   }
-  const le = fin.liabilities_and_equity, eq = fin.equity;
-  if (fin.total_liabilities.value === null && le.value !== null && eq.value !== null && le.asOf === eq.asOf) {
-    fin.total_liabilities = { value: le.value - eq.value, source: `${SRC} · LiabilitiesAndStockholdersEquity − StockholdersEquity`,
+  // a balance-sheet component last reported well before the latest balance sheet is stale: do not mix periods
+  const ref = g("total_assets").asOf ?? g("current_assets").asOf;
+  if (ref) {
+    for (const k of BALANCE_SHEET_KEYS) {
+      const cur = g(k);
+      if (cur.value !== null && cur.asOf && toDay(ref) - toDay(cur.asOf) > 100) {
+        fin[k] = missing(`${STALE_PREFIX} הערך האחרון מדווח ל-${cur.asOf}, ישן מתאריך המאזן ${ref} — לא נכלל`, SRC);
+      }
+    }
+  }
+  const le = g("liabilities_and_equity"), eq = g("equity");
+  if (g("total_liabilities").value === null && le.value !== null && eq.value !== null && le.asOf === eq.asOf) {
+    fin["total_liabilities"] = { value: le.value - eq.value, source: `${SRC} · LiabilitiesAndStockholdersEquity − StockholdersEquity`,
       asOf: eq.asOf, layer: "CALC", note: "", fetched };
   }
-  if (fin.lt_debt_noncurrent.value !== null) fin.lt_debt = fin.lt_debt_noncurrent;
-  else if (fin.lt_debt_total.value !== null) {
-    const t = fin.lt_debt_total, s = fin.st_debt;
+  if (g("lt_debt_noncurrent").value !== null) fin["lt_debt"] = g("lt_debt_noncurrent");
+  else if (g("lt_debt_total").value !== null) {
+    const t = g("lt_debt_total"), s = g("st_debt");
     const cur = s.value !== null && s.asOf === t.asOf ? s.value : 0;
-    fin.lt_debt = { value: t.value! - cur, source: t.source + " − חלות שוטפת", asOf: t.asOf, layer: "CALC", note: "", fetched };
-  } else fin.lt_debt = missing("לא דווח חוב לזמן ארוך בתגי XBRL (ייתכן שאין חוב)", SRC);
+    fin["lt_debt"] = { value: t.value! - cur, source: t.source + " − חלות שוטפת", asOf: t.asOf, layer: "CALC", note: "", fetched };
+  } else fin["lt_debt"] = missing("לא דווח חוב לזמן ארוך בתגי XBRL (ייתכן שאין חוב)", SRC);
 
   // shares
-  const so = instantSeries(cf, ["EntityCommonStockSharesOutstanding"], "shares", "dei");
+  const soRaw = instantSeries(cf, ["EntityCommonStockSharesOutstanding"], "shares", "dei");
+  const { series: so, splits } = adjustForSplits(soRaw);
+  const splitNote = splits.length ? `מותאם לפיצול מניות: ${splits.map((x) => `${x.factor >= 1 ? x.factor : "1/" + Math.round(1 / x.factor)}:1 ב-${x.date}`).join(", ")}` : "";
   if (so.length) {
     const last = so.at(-1)!;
-    fin.shares_outstanding = { value: last.val, source: `${SRC} · dei:EntityCommonStockSharesOutstanding`, asOf: last.end, layer: "RAW", note: "", fetched };
+    fin["shares_outstanding"] = { value: last.val, source: `${SRC} · dei:EntityCommonStockSharesOutstanding`, asOf: last.end, layer: "RAW", note: "", fetched };
     const target = toDay(last.end) - 3 * 365;
-    const old = so.reduce((b, r) => (Math.abs(toDay(r.end) - target) < Math.abs(toDay(b.end) - target) ? r : b), so[0]);
-    fin.shares_outstanding_3y = Math.abs(toDay(old.end) - target) <= 120
-      ? { value: old.val, source: `${SRC} · dei:EntityCommonStockSharesOutstanding`, asOf: old.end, layer: "RAW", note: "", fetched }
+    const old = so.reduce((b, r) => (Math.abs(toDay(r.end) - target) < Math.abs(toDay(b.end) - target) ? r : b), so[0]!);
+    fin["shares_outstanding_3y"] = Math.abs(toDay(old.end) - target) <= 120
+      ? { value: old.val, source: `${SRC} · dei:EntityCommonStockSharesOutstanding`, asOf: old.end, layer: splits.length ? "CALC" : "RAW", note: splitNote, fetched }
       : missing("אין נתון מניות מלפני ~3 שנים", SRC);
   } else {
-    fin.shares_outstanding = missing("dei:EntityCommonStockSharesOutstanding חסר", SRC);
-    fin.shares_outstanding_3y = missing("אין היסטוריית מניות", SRC);
+    fin["shares_outstanding"] = missing("dei:EntityCommonStockSharesOutstanding חסר", SRC);
+    fin["shares_outstanding_3y"] = missing("אין היסטוריית מניות", SRC);
   }
   const dil = quarterlySeries(cf, ["WeightedAverageNumberOfDilutedSharesOutstanding"], "shares").filter((q) => q.how === "direct");
   if (dil.length) {
     const d = dil.at(-1)!;
-    fin.diluted_shares = { value: d.val, source: `${SRC} · WeightedAverageNumberOfDilutedSharesOutstanding (רבעוני)`, asOf: d.end, layer: "RAW", note: "", fetched };
+    fin["diluted_shares"] = { value: d.val, source: `${SRC} · WeightedAverageNumberOfDilutedSharesOutstanding (רבעוני)`, asOf: d.end, layer: "RAW", note: "", fetched };
   } else {
     const da = annualSeries(cf, ["WeightedAverageNumberOfDilutedSharesOutstanding"], "shares");
-    fin.diluted_shares = da.length
+    fin["diluted_shares"] = da.length
       ? { value: da.at(-1)!.val, source: `${SRC} · WeightedAverageNumberOfDilutedSharesOutstanding (שנתי)`, asOf: da.at(-1)!.end, layer: "RAW", note: "", fetched }
       : missing("מניות בדילול מלא חסרות", SRC);
   }
-  annual.diluted_shares = annualSeries(cf, ["WeightedAverageNumberOfDilutedSharesOutstanding"], "shares");
-  annual.shares_outstanding = so;
+  annual["diluted_shares"] = annualSeries(cf, ["WeightedAverageNumberOfDilutedSharesOutstanding"], "shares");
+  annual["shares_outstanding"] = so;
 
   // EPS quarterly (diluted)
   let eps: Period[] = [];
@@ -279,12 +319,12 @@ export function extract(cf: CompanyFacts, fetched: string | null = null): Extrac
     if (eps.length) break;
   }
   const ded: Record<string, Period> = {};
-  for (const r of eps) if (!(r.end in ded) || (r.filed ?? "") > (ded[r.end].filed ?? "")) ded[r.end] = r;
-  eps = sortedKeys(ded).map((k) => ded[k]);
-  quarterly.eps_diluted = eps;
+  for (const r of eps) if (!(r.end in ded) || (r.filed ?? "") > (ded[r.end]!.filed ?? "")) ded[r.end] = r;
+  eps = sortedKeys(ded).map((k) => ded[k]!);
+  quarterly["eps_diluted"] = eps;
 
   for (const key of ["cash", "st_investments", "st_debt", "lt_debt_noncurrent", "lt_debt_total", "equity"]) {
-    annual[key + "_instant"] = instantSeries(cf, INSTANT_TAGS[key]);
+    annual[key + "_instant"] = instantSeries(cf, INSTANT_TAGS[key]!);
   }
 
   // debt maturities (latest 10-K)
@@ -303,7 +343,7 @@ export function extract(cf: CompanyFacts, fetched: string | null = null): Extrac
   }
   if (!maturities.length) gaps.push("לוח פירעונות חוב לא דווח ב-XBRL");
   for (const k of ["revenue", "operating_income", "net_income", "ocf", "capex", "cash", "current_assets", "current_liabilities", "equity"]) {
-    if (fin[k].value === null) gaps.push(`${k}: ${fin[k].note}`);
+    if (g(k).value === null) gaps.push(`${k}: ${g(k).note}`);
   }
-  return { fin, annual, quarterly, maturities, maturitiesAsOf: latestEnd, gaps };
+  return { fin, annual, quarterly, maturities, maturitiesAsOf: latestEnd, gaps, splits };
 }

@@ -23,6 +23,7 @@ for (const c of cases) {
   const m = computeMetrics({ fin: x.fin, annual: x.annual, quarterly: x.quarterly, price, quoteMeta: meta,
     nextEarnings: { date: "2026-11-25", source: "test", eps_est: 0.9 }, today: "2026-11-14" });
   for (const [k, pv] of Object.entries(c.metrics)) { checks++; if (!close(m[k]?.value ?? null, pv)) { fails++; console.log(`[${c.name}] metric.${k}: ts=${m[k]?.value} py=${pv}`); } }
+  for (const [k, pn] of Object.entries(c.notes ?? {})) { checks++; if ((m[k]?.note ?? "") !== pn) { fails++; console.log(`[${c.name}] note.${k}: ts=${m[k]?.note} py=${pn}`); } }
   const h = health(m, x.fin.operating_income, x.maturities, 0.6, 2026);
   checks += 4;
   if (!close(h.score.score, c.health)) { fails++; console.log(`[${c.name}] health ts=${h.score.score} py=${c.health}`); }

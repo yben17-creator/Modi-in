@@ -22,18 +22,19 @@ def compute_metrics(cd: CompanyData) -> dict[str, Val]:
 
     # ---- capital structure
     m["mcap"] = calc(v(price) * v(sh_out) if price and sh_out else None, "מחיר × מניות במחזור", [price, sh_out])
-    # Missing short-term investments / debt tags are treated as zero ONLY if cash is reported (common XBRL practice:
-    # untagged = not present). This assumption is flagged in the note.
-    zero_note = []
-    sti_v = v(sti) if sti else (0.0 if cash else None)
-    if not sti and cash:
-        zero_note.append("השקעות קצרות לא דווחו → 0")
-    std_v = v(std_) if std_ else (0.0 if cash else None)
-    if not std_ and cash:
-        zero_note.append("חוב קצר לא דווח → 0")
-    ltd_v = v(ltd) if ltd else (0.0 if cash else None)
-    if not ltd and cash:
-        zero_note.append("חוב ארוך לא דווח → 0")
+    # Untagged component with cash reported → 0 (it does not exist). A STALE component (reported before, absent now)
+    # is not assumed to be 0: the total is computed without it and flagged as possibly understated.
+    zero_note: list[str] = []
+    def part(x: Val, he: str):
+        if x:
+            return x.value
+        if not cash:
+            return None
+        zero_note.append(f"{he} לא דווח בדוח האחרון (דווח בעבר) — ייתכן שהסכום חסר" if (x.note or "").startswith("ישן:") else f"{he} לא דווח → 0")
+        return 0.0
+    sti_v = part(sti, "השקעות קצרות")
+    std_v = part(std_, "חוב קצר")
+    ltd_v = part(ltd, "חוב ארוך")
     note = "; ".join(zero_note)
     m["cash_all"] = calc(v(cash) + sti_v if cash and sti_v is not None else None, "מזומן + השקעות לזמן קצר", [cash], note)
     m["total_debt"] = calc(std_v + ltd_v if std_v is not None and ltd_v is not None else None, "חוב קצר + חוב ארוך", [cash], note)
