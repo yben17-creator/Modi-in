@@ -1,13 +1,14 @@
 # PROJECT_STATE — מצב הפרויקט
 
-**עודכן:** 2026-11-14 · **שלב נוכחי:** Phase 0 (ביקורת) הושלם → M0 (תשתית)
+**עודכן:** 2026-11-14 · **שלב נוכחי:** M0 (תשתית) הושלם ב-Lovable → M1 (נתונים אמיתיים)
 
 ## החלטות משתמש (2026-11-14)
 - ממשק: **Lovable**. בסיס נתונים יחיד: **Lovable Cloud** (ללא Supabase חיצוני).
 - מנוע החישובים: **הסבה ל-TypeScript** בתוך Edge Functions של Lovable Cloud. אין אחסון Python חיצוני. קוד ה-Python נשמר כמימוש ייחוס ובדיקת השוואה.
 - Finnhub: **תוכנית חינמית**. המפתח יוזן ע"י המשתמש ל-Lovable Secrets בלבד.
 - משתמשים: **משתמש יחיד** בשלב זה.
-- ניהול קוד: GitHub `yben17-creator/Modi-in`.
+- ניהול קוד: `Modi-in` = בית הפרויקט (אפיון, מסמכים, Python ייחוס, בדיקות). קוד האפליקציה במאגר ש-Lovable יוצר (Lovable אינו מתחבר למאגר קיים).
+- סביבת Lovable: TanStack Start — עבודת שרת רצה כ-server functions של האפליקציה (לא supabase/functions). המנוע ב-`src/lib/engine/`.
 
 ## מקרא סטטוס
 ✅ עובד ונבדק (על נתוני בדיקה) · 🟡 מומש, לא נבדק מול נתונים חיים · 🎭 הדגמה בלבד · ❌ לא מומש
@@ -17,7 +18,8 @@
 |---|---|---|
 | אבטיפוס Phase 1 | `prototype/index.html` | 🎭 11 חברות בדיוניות, מנועי חישוב פועלים על נתונים סינתטיים |
 | Python + Streamlit (Phase 3) | `python/` | ✅ 11 בדיקות עוברות על נתוני בדיקה בפורמט SEC · 🟡 אף קריאה חיה ל-SEC/Finnhub/Massive לא בוצעה |
-| פרויקט Lovable / Lovable Cloud | — | ❌ |
+| פרויקט Lovable "Earnings Insight" (id 55112968…) | https://lovable.dev/projects/55112968-86ce-4c3d-8cc4-5bddf23ee2f1 | 🟡 M0: מעטפת RTL, 13 מסכים ריקים, הרשמה/התחברות, 10 טבלאות עם RLS. בדיקות Lovable עוברות; מסכים מחוברים טרם נבדקו בדפדפן. עלות: 4 קרדיטים |
+| מנוע TypeScript | `engine-ts/` | ✅ xbrl + metrics + health זהים ל-Python (294/294) |
 | נתונים חיים | — | ❌ לא הודגם |
 
 ## מודולים מול האפיון
