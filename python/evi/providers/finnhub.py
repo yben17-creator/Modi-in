@@ -107,6 +107,8 @@ class FinnhubProvider:
         flags: list[Flag] = []
         seen: set[str] = set()
         for n in js:
+            if not n.get("datetime"):
+                continue  # undated item: no date to show or to judge "known to market" by
             text = f"{n.get('headline', '')} {n.get('summary', '')}".lower()
             for kws, cat, he, sev, structural in NEWS_RULES:
                 if any(k in text for k in kws):
