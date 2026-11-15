@@ -204,8 +204,8 @@ def final(h: Score, val: dict, e: Score, r: dict, fallen: dict, cfg: dict) -> di
         return {"composite": None, "idx": 3, "cls": CLASSES[3], "capped": False, "reason": f"ציון בריאות {hs:.0f} מתחת לסף {min_h:.0f}"}
     w = {"h": .35, "v": .35, "e": .2, "r": .1}
     parts = {"h": hs, "v": vs, "e": es, "r": 100 - r["score"]}
-    avail = {k: x for k, x in parts.items() if x is not None}
-    comp = round(sum(w[k] * x for k, x in avail.items()) / sum(w[k] for k in avail), 1)
+    # a missing component counts as neutral 50 — it is never dropped, so missing data cannot raise the composite (EVI M8.0)
+    comp = round(sum(w[k] * (x if x is not None else 50.0) for k, x in parts.items()) / sum(w.values()), 1)
     mos = val.get("mos")
     if comp >= cfg.get("high_priority_composite", 65) and mos is not None and mos >= cfg.get("high_priority_mos", .15) and r["score"] < 50:
         idx = 0
