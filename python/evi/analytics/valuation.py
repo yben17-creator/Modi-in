@@ -90,7 +90,9 @@ def historical_multiples(cd: CompanyData, years: int = 5) -> dict[str, Any]:
     rev = {r["end"]: r["val"] for r in cd.annual.get("revenue", [])}
     ocf = {r["end"]: r["val"] for r in cd.annual.get("ocf", [])}
     capex = {r["end"]: r["val"] for r in cd.annual.get("capex", [])}
-    shares = cd.annual.get("diluted_shares", [])
+    # restate pre-split share counts so they match split-adjusted prices (same detector as shares outstanding)
+    from ..providers.xbrl import adjust_for_splits
+    shares, _ = adjust_for_splits(cd.annual.get("diluted_shares", []))
     def inst(key: str, end: str) -> float | None:
         s = [x for x in cd.annual.get(key + "_instant", []) if x["end"] == end]
         return s[0]["val"] if s else None
