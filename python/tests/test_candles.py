@@ -104,3 +104,15 @@ def test_run_history_offline(tmp_path, monkeypatch):
     rep = mod.run(["TSTC"], tmp_path / "out", hub=hub, settings=s)
     md = (tmp_path / "out" / "history_report.md").read_text(encoding="utf-8")
     assert rep["companies"][0]["bars"] > 0 and "אותות נרות" in md
+
+
+def test_tiingo_keeps_adjusted_columns_only(tmp_path):
+    from evi.providers.prices import TiingoPrices
+    from evi.store import Store
+    tp = TiingoPrices(Store(tmp_path / "t.sqlite"), "k")
+    row = {"date": "2026-01-02T00:00:00.000Z", "open": 10, "high": 11, "low": 9, "close": 10.5, "volume": 100,
+           "adjOpen": 5, "adjHigh": 5.5, "adjLow": 4.5, "adjClose": 5.25, "adjVolume": 200, "divCash": 0, "splitFactor": 1}
+    tp.http.get_json = lambda *a, **k: [row, {**row, "date": "2026-01-05T00:00:00.000Z"}]
+    df = tp.history("MSFT", 1)
+    assert list(df.columns) == ["open", "high", "low", "close", "volume"]
+    assert df["close"].iloc[-1] == 5.25 and df["volume"].iloc[-1] == 200
