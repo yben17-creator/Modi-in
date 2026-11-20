@@ -46,7 +46,10 @@ def run(tickers: list[str], out: Path, hub: DataHub | None = None, settings=None
     cds = []
     for t in tickers:
         print(f"loading {t}", flush=True)
-        cds.append(hub.load(t))
+        try:
+            cds.append(hub.load(t))
+        except Exception as e:  # one bad ticker must not stop the run; it is reported, not hidden
+            hub.errors.append(f"{t}: טעינה נכשלה — {type(e).__name__}: {e}")
     bench = hub.benchmark()
     results = analyze_all(cds, settings, bench)
     wf = walk_forward(results, bench, float(settings.get("backtest.cost_bps_per_side", 15)))

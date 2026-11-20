@@ -64,8 +64,12 @@ class TiingoPrices:
         if not isinstance(js, list) or not js:
             return None
         df = pd.DataFrame(js)
+        need = ["date", "adjOpen", "adjHigh", "adjLow", "adjClose", "adjVolume"]
+        if any(k not in df.columns for k in need):
+            return None
+        # Tiingo sends raw open/close/... AND adjusted adj*; keep only the adjusted set to avoid duplicate column names
+        df = df[need].rename(columns={"adjOpen": "open", "adjHigh": "high", "adjLow": "low", "adjClose": "close", "adjVolume": "volume"})
         df["date"] = pd.to_datetime(df["date"]).dt.date
-        df = df.rename(columns={"adjOpen": "open", "adjHigh": "high", "adjLow": "low", "adjClose": "close", "adjVolume": "volume"})
         return _finish(df)
 
 
