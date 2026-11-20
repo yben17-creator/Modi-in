@@ -2,3 +2,4 @@
 data/evi.sqlite
 __pycache__/
 .pytest_cache/
+out/

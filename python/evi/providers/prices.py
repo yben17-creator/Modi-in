@@ -1,5 +1,6 @@
 """Daily price history providers. Output: DataFrame indexed by date with open/high/low/close/volume (split/dividend adjusted).
 
+* Tiingo — requires TIINGO_API_KEY. Free plan: adjusted EOD history (decades), ~1000 requests/day.
 * Massive (formerly Polygon.io) — requires MASSIVE_API_KEY. Free plan: end-of-day data, limited history and calls/minute.
 * Yahoo via yfinance — unofficial, disabled by default (ENABLE_YFINANCE=true to opt in). Not an official data feed.
 If no provider is configured, price history is missing and every module that needs it shows "חסר".
@@ -45,6 +46,29 @@ class MassivePrices:
         return _finish(df)
 
 
+class TiingoPrices:
+    name = "Tiingo · EOD adjusted"
+
+    def __init__(self, store: Store, api_key: str, per_second: float = 0.5):
+        self.key = api_key
+        self.http = CachedHttp(store, "tiingo", per_second)
+
+    def history(self, symbol: str, years: int) -> pd.DataFrame | None:
+        start = date.today() - timedelta(days=int(365.25 * years))
+        url = f"https://api.tiingo.com/tiingo/daily/{symbol.replace('.', '-').lower()}/prices"
+        try:
+            js = self.http.get_json(url, {"startDate": start.isoformat(), "resampleFreq": "daily", "token": self.key},
+                                    ttl_h=12, secret=("token",))
+        except HttpError:
+            return None
+        if not isinstance(js, list) or not js:
+            return None
+        df = pd.DataFrame(js)
+        df["date"] = pd.to_datetime(df["date"]).dt.date
+        df = df.rename(columns={"adjOpen": "open", "adjHigh": "high", "adjLow": "low", "adjClose": "close", "adjVolume": "volume"})
+        return _finish(df)
+
+
 class YFinancePrices:
     name = "Yahoo Finance via yfinance (לא רשמי)"
 
@@ -74,10 +98,13 @@ def _finish(df: pd.DataFrame) -> pd.DataFrame | None:
     return df
 
 
-def build_price_sources(store: Store, order: list[str], massive_key: str | None, enable_yf: bool, massive_base: str) -> list[PriceSource]:
+def build_price_sources(store: Store, order: list[str], massive_key: str | None, enable_yf: bool, massive_base: str,
+                        tiingo_key: str | None = None) -> list[PriceSource]:
     out: list[PriceSource] = []
     for name in order:
-        if name == "massive" and massive_key:
+        if name == "tiingo" and tiingo_key:
+            out.append(TiingoPrices(store, tiingo_key))
+        elif name == "massive" and massive_key:
             out.append(MassivePrices(store, massive_key, massive_base))
         elif name == "yfinance" and enable_yf:
             try:

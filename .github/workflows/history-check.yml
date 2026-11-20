@@ -1,0 +1,51 @@
+# EVI — tests on every push; manual "run on past data" with real SEC + Tiingo data (free plans only).
+# Needs repository secrets: SEC_USER_AGENT ("Your Name you@mail.com"), TIINGO_API_KEY.
+name: EVI history check
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: "Tickers separated by spaces (empty = default list of 20 US tech stocks)"
+        required: false
+        default: ""
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    defaults: {run: {working-directory: python}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: pip install pandas numpy requests PyYAML pytest openpyxl reportlab python-bidi plotly
+      - run: python -m pytest -q
+  history:
+    if: github.event_name == 'workflow_dispatch'
+    needs: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults: {run: {working-directory: python}}
+    env:
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+      TIINGO_API_KEY: ${{ secrets.TIINGO_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: pip install pandas numpy requests PyYAML openpyxl reportlab python-bidi plotly
+      - name: Run on past data
+        run: |
+          if [ -n "${{ github.event.inputs.tickers }}" ]; then
+            python scripts/run_history.py --out out --tickers ${{ github.event.inputs.tickers }}
+          else
+            python scripts/run_history.py --out out
+          fi
+      - run: cat out/history_report.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: history-report
+          path: |
+            python/out/history_report.md
+            python/out/history_report.json
