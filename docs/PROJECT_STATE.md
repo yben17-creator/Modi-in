@@ -1,6 +1,6 @@
 # PROJECT_STATE — מצב הפרויקט
 
-**עודכן:** 2026-11-14 · **שלב נוכחי:** M0 (תשתית) הושלם ב-Lovable → M1 (נתונים אמיתיים)
+**עודכן:** 2026-11-20 · **שלב נוכחי:** מנוע הייחוס ב-Python הגיע ל-M8.0; נוספה שכבת נרות ונפח (M10) ובדיקה על נתוני עבר דרך GitHub Actions. טבלאות המלאי והמודולים למטה עדיין ממצב 14/11 ויעודכנו בסוף השלב.
 
 ## החלטות משתמש (2026-11-14)
 - ממשק: **Lovable**. בסיס נתונים יחיד: **Lovable Cloud** (ללא Supabase חיצוני).
@@ -20,7 +20,8 @@
 | Python + Streamlit (Phase 3) | `python/` | ✅ 11 בדיקות עוברות על נתוני בדיקה בפורמט SEC · 🟡 אף קריאה חיה ל-SEC/Finnhub/Massive לא בוצעה |
 | פרויקט Lovable "Earnings Insight" (id 55112968…) | https://lovable.dev/projects/55112968-86ce-4c3d-8cc4-5bddf23ee2f1 | 🟡 M0: מעטפת RTL, 13 מסכים ריקים, הרשמה/התחברות, 10 טבלאות עם RLS. בדיקות Lovable עוברות; מסכים מחוברים טרם נבדקו בדפדפן. עלות: 4 קרדיטים |
 | מנוע TypeScript | `engine-ts/` | ✅ xbrl + metrics + health זהים ל-Python (294/294) |
-| נתונים חיים | — | ❌ לא הודגם |
+| נתונים חיים | — | ❌ לא הודגם · ההרצה הראשונה: workflow `EVI history check` (דורש סודות SEC_USER_AGENT + TIINGO_API_KEY ב-GitHub) |
+| שכבת נרות ונפח | `python/evi/analytics/candles.py` | ✅ על נתוני בדיקה · 🟡 טרם הורץ על נתונים חיים · Short Interest ❌ |
 
 ## מודולים מול האפיון
 | מודול | מומש (Python) | חסר מול האפיון | תלות |

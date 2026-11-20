@@ -38,7 +38,8 @@ class DataHub:
             self.errors.append(str(e))
         self.finnhub = FinnhubProvider(store, settings.finnhub_key, settings.get("finnhub.rate_limit_per_sec", 0.9)) if settings.finnhub_key else None
         self.price_sources = build_price_sources(store, settings.get("prices.providers", ["massive", "yfinance"]), settings.massive_key,
-                                                 settings.enable_yfinance, settings.get("prices.massive_base_url", "https://api.massive.com"))
+                                                 settings.enable_yfinance, settings.get("prices.massive_base_url", "https://api.massive.com"),
+                                                 settings.tiingo_key)
         self._bench: pd.DataFrame | None = None
         self._bench_loaded = False
 
@@ -50,7 +51,7 @@ class DataHub:
             {"group": "מחיר עדכני, 52 שבועות, לוח דוחות, קונצנזוס, הפתעות EPS, חדשות", "provider": "Finnhub",
              "active": self.finnhub is not None, "note": "פעיל" if self.finnhub else "לא הוגדר FINNHUB_API_KEY — הנתונים יוצגו כחסרים"},
             {"group": "היסטוריית מחירים (Backtest, מומנטום)", "provider": " → ".join(p.name for p in self.price_sources) or "—",
-             "active": bool(self.price_sources), "note": "פעיל" if self.price_sources else "לא הוגדר ספק מחירים (MASSIVE_API_KEY או ENABLE_YFINANCE)"},
+             "active": bool(self.price_sources), "note": "פעיל" if self.price_sources else "לא הוגדר ספק מחירים (TIINGO_API_KEY, MASSIVE_API_KEY או ENABLE_YFINANCE)"},
         ]
 
     # ---------------------------------------------------------------- universe & candidates

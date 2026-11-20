@@ -11,7 +11,7 @@ from ..config import Settings
 from ..models import CompanyData, now_iso, v
 from ..providers.router import DataHub
 from ..store import Store
-from . import momentum, scores, timing
+from . import candles, momentum, scores, timing
 from .fallen import fallen_angel
 from .metrics import compute_metrics
 from .valuation import Assumptions, default_assumptions, peer_medians, valuation
@@ -71,7 +71,9 @@ def analyze_all(cds: list[CompanyData], settings: Settings, bench: pd.DataFrame 
         fin = scores.final(h, val, e, r, fa, cfg_cls)
         rev_change = scores.estimate_revision(cd)
         mon = momentum.monitor(cd, m, val, bench, rev_change)
-        out.append(Result(cd, m, h, severe, near, a, val, t, e, r, fa, fin, mon, vol, rev_change, {"peers": peers.get(cd.sector or "", {})}))
+        cdl = candles.analyze(cd.prices, val.get("mid"))
+        out.append(Result(cd, m, h, severe, near, a, val, t, e, r, fa, fin, mon, vol, rev_change,
+                          {"peers": peers.get(cd.sector or "", {}), "candles": cdl}))
     return out
 
 

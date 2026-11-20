@@ -41,6 +41,7 @@ class Settings:
     finnhub_key: str | None
     massive_key: str | None
     enable_yfinance: bool
+    tiingo_key: str | None = None
     telegram_token: str | None = None
     telegram_chat: str | None = None
     smtp: dict[str, str | None] = field(default_factory=dict)
@@ -62,6 +63,7 @@ class Settings:
         return {
             "SEC EDGAR": bool(self.sec_user_agent and "@" in self.sec_user_agent),
             "Finnhub": bool(self.finnhub_key),
+            "Tiingo": bool(self.tiingo_key),
             "Massive": bool(self.massive_key),
             "Yahoo (yfinance, לא רשמי)": self.enable_yfinance,
         }
@@ -83,6 +85,7 @@ def load_settings(config_path: Path | None = None, reload: bool = False) -> Sett
         finnhub_key=os.environ.get("FINNHUB_API_KEY", "").strip() or None,
         massive_key=os.environ.get("MASSIVE_API_KEY", "").strip() or None,
         enable_yfinance=_env_bool("ENABLE_YFINANCE", False),
+        tiingo_key=os.environ.get("TIINGO_API_KEY", "").strip() or None,
         telegram_token=os.environ.get("TELEGRAM_BOT_TOKEN") or None,
         telegram_chat=os.environ.get("TELEGRAM_CHAT_ID") or None,
         smtp={k: os.environ.get(k) for k in ("SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD", "ALERT_EMAIL_TO")},

@@ -20,9 +20,9 @@ finnhub:
   rate_limit_per_sec: 0.9    # free plan: 60 calls/minute
 
 prices:
-  providers: [massive, yfinance]   # order of preference; each needs its key / opt-in in .env
+  providers: [tiingo, massive, yfinance]   # order of preference; each needs its key / opt-in in .env
   massive_base_url: https://api.massive.com
-  history_years: 6
+  history_years: 10
   benchmark: SPY
 
 valuation:
