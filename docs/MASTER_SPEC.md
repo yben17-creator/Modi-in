@@ -4,6 +4,8 @@
 **Purpose:** Transfer project context, implementation status, authoritative specification, and next steps to Claude or another development environment.  
 **Priority:** This handoff and the embedded Master Specification supersede earlier conflicting architecture requests.
 
+> **Super agent (2026-11-28):** the multi-agent analysis layer on top of the engines is specified in [`docs/SUPER_AGENT_SPEC.md`](SUPER_AGENT_SPEC.md) (Hebrew), checked against the code the same day. The model-improvement process is in `earnings-insight/docs/IMPROVEMENT_LOOP.md`.
+
 ## A. VERIFIED VS REPORTED IMPLEMENTATION STATUS
 
 **Important: This is a conversation-based handoff, not a source-code audit.** The receiving developer must inspect the actual Claude workspace, repository, deployed services, and test output before claiming functionality.
