@@ -1,0 +1,54 @@
+{
+ "agent": "maestro",
+ "version": "maestro-v0-stage2",
+ "ticker": "ODC",
+ "asOf": "2026-11-28",
+ "score": 76,
+ "confidence": "medium",
+ "base": {
+  "gap": 76,
+  "valuation": 100
+ },
+ "adjustments": [],
+ "conflicts": [],
+ "next_report": {
+  "date": "2026-12-07",
+  "estimated": true,
+  "days_away": 9
+ },
+ "summary_he": "פער ציפיות 76 ותמחור 100: לפי ה-DCF ההפוך המחיר מגלם צמיחה של -13.6% בשנה מול צמיחה צפויה של +6.4% (CAGR הכנסות 3 שנים +6.1%). האודיטור: איתנות 82, 2 אינדיקטורים מקדימים חיוביים ו-1 שליליים (מגמה יציבה). מקורבים: 2 מכירות ו-0 קניות. הדוח הבא (הערכה) ב-2026-12-07, בעוד 9 ימים.",
+ "evidence_note_he": "פער הציפיות והתמחור הראו כוח ניבוי בבדיקה המתוקנת (IC 0.088 / 0.072), אבל הם כמעט אותו ציון, וציון תמחור 100 לא מבדיל בין המועמדות המובילות.",
+ "findings": [
+  {
+   "agent": "auditor",
+   "ticker": "ODC",
+   "asOf": "2026-11-28",
+   "trend": "stable",
+   "health": 82,
+   "gate_pass": true,
+   "evidence": [
+    {
+     "point": "ציון איתנות פיננסית",
+     "value": "82",
+     "field": "auditor.health"
+    },
+    {
+     "point": "Accruals משתפר",
+     "value": "-0.05636338899647995",
+     "field": "auditor.leading.signals[accruals]"
+    },
+    {
+     "point": "עקביות FCF משתפר",
+     "value": "3",
+     "field": "auditor.leading.signals[fcf_consistency]"
+    }
+   ],
+   "red_flags": [],
+   "unknown": [
+    "surprises חסר",
+    "אין נתוני הפתעות רווח (Finnhub)"
+   ],
+   "summary_he": "איתנות 82, 2 אינדיקטורים מקדימים חיוביים ו-1 שליליים (מגמה יציבה). מקורבים: 2 מכירות ו-0 קניות."
+  }
+ ]
+}

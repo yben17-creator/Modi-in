@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EVI Maestro verdict (stage 2)",
+  "type": "object",
+  "required": ["agent", "version", "ticker", "asOf", "score", "confidence", "base", "adjustments", "conflicts", "summary_he", "findings"],
+  "properties": {
+    "agent": {"const": "maestro"},
+    "score": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+    "confidence": {"enum": ["high", "medium", "low"]},
+    "findings": {"type": "array", "items": {"type": "object", "required": ["agent", "trend", "evidence", "summary_he"]}}
+  }
+}

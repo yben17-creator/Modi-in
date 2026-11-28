@@ -1,0 +1,57 @@
+{
+ "agent": "maestro",
+ "version": "maestro-v0-stage2",
+ "ticker": "COST",
+ "asOf": "2026-11-28",
+ "score": 62.3,
+ "confidence": "medium",
+ "base": {
+  "gap": 57.3,
+  "valuation": 59.8
+ },
+ "adjustments": [
+  {
+   "by": "auditor",
+   "delta": 5,
+   "why_he": "מגמת שיפור באינדיקטורים מקדימים"
+  }
+ ],
+ "conflicts": [],
+ "next_report": {
+  "date": "2026-12-10",
+  "estimated": true,
+  "days_away": 12
+ },
+ "summary_he": "פער ציפיות 57.3 ותמחור 59.8: לפי ה-DCF ההפוך המחיר מגלם צמיחה של +5.0% בשנה מול צמיחה צפויה של +8.4% (CAGR הכנסות 3 שנים +7.8%). האודיטור: איתנות 65, 3 אינדיקטורים מקדימים חיוביים ו-0 שליליים (מגמת שיפור). מקורבים: 6 מכירות ו-0 קניות. הדוח הבא (הערכה) ב-2026-12-10, בעוד 12 ימים.",
+ "evidence_note_he": "פער הציפיות והתמחור הראו כוח ניבוי בבדיקה המתוקנת (IC 0.088 / 0.072), אבל הם כמעט אותו ציון, וציון תמחור 100 לא מבדיל בין המועמדות המובילות.",
+ "findings": [
+  {
+   "agent": "auditor",
+   "ticker": "COST",
+   "asOf": "2026-11-28",
+   "trend": "improving",
+   "health": 65,
+   "gate_pass": true,
+   "evidence": [
+    {
+     "point": "ציון איתנות פיננסית",
+     "value": "65",
+     "field": "auditor.health"
+    },
+    {
+     "point": "Accruals משתפר",
+     "value": "-0.079340812788906",
+     "field": "auditor.leading.signals[accruals]"
+    },
+    {
+     "point": "עקביות FCF משתפר",
+     "value": "3",
+     "field": "auditor.leading.signals[fcf_consistency]"
+    }
+   ],
+   "red_flags": [],
+   "unknown": [],
+   "summary_he": "איתנות 65, 3 אינדיקטורים מקדימים חיוביים ו-0 שליליים (מגמת שיפור). מקורבים: 6 מכירות ו-0 קניות."
+  }
+ ]
+}

@@ -1,0 +1,57 @@
+{
+ "agent": "maestro",
+ "version": "maestro-v0-stage2",
+ "ticker": "SIG",
+ "asOf": "2026-11-28",
+ "score": 86.5,
+ "confidence": "high",
+ "base": {
+  "gap": 81.5,
+  "valuation": 100
+ },
+ "adjustments": [
+  {
+   "by": "auditor",
+   "delta": 5,
+   "why_he": "מגמת שיפור באינדיקטורים מקדימים"
+  }
+ ],
+ "conflicts": [],
+ "next_report": {
+  "date": "2026-12-01",
+  "estimated": true,
+  "days_away": 3
+ },
+ "summary_he": "פער ציפיות 81.5 ותמחור 100: לפי ה-DCF ההפוך המחיר מגלם צמיחה של -20.3% בשנה מול צמיחה צפויה של -1.9% (CAGR הכנסות 3 שנים −4.6%). האודיטור: איתנות 71, 3 אינדיקטורים מקדימים חיוביים ו-0 שליליים (מגמת שיפור). מקורבים: 2 מכירות ו-0 קניות. הדוח הבא (הערכה) ב-2026-12-01, בעוד 3 ימים.",
+ "evidence_note_he": "פער הציפיות והתמחור הראו כוח ניבוי בבדיקה המתוקנת (IC 0.088 / 0.072), אבל הם כמעט אותו ציון, וציון תמחור 100 לא מבדיל בין המועמדות המובילות.",
+ "findings": [
+  {
+   "agent": "auditor",
+   "ticker": "SIG",
+   "asOf": "2026-11-28",
+   "trend": "improving",
+   "health": 71,
+   "gate_pass": true,
+   "evidence": [
+    {
+     "point": "ציון איתנות פיננסית",
+     "value": "71",
+     "field": "auditor.health"
+    },
+    {
+     "point": "Accruals משתפר",
+     "value": "-0.06230216090608018",
+     "field": "auditor.leading.signals[accruals]"
+    },
+    {
+     "point": "מרווח תפעולי משתפר",
+     "value": "0.037052771809203126",
+     "field": "auditor.leading.signals[op_margin]"
+    }
+   ],
+   "red_flags": [],
+   "unknown": [],
+   "summary_he": "איתנות 71, 3 אינדיקטורים מקדימים חיוביים ו-0 שליליים (מגמת שיפור). מקורבים: 2 מכירות ו-0 קניות."
+  }
+ ]
+}

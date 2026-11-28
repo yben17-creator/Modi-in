@@ -1,0 +1,57 @@
+{
+ "agent": "maestro",
+ "version": "maestro-v0-stage2",
+ "ticker": "AEO",
+ "asOf": "2026-11-28",
+ "score": 85.2,
+ "confidence": "high",
+ "base": {
+  "gap": 80.2,
+  "valuation": 100
+ },
+ "adjustments": [
+  {
+   "by": "auditor",
+   "delta": 5,
+   "why_he": "מגמת שיפור באינדיקטורים מקדימים"
+  }
+ ],
+ "conflicts": [],
+ "next_report": {
+  "date": "2026-12-01",
+  "estimated": true,
+  "days_away": 3
+ },
+ "summary_he": "פער ציפיות 80.2 ותמחור 100: לפי ה-DCF ההפוך המחיר מגלם צמיחה של -11.0% בשנה מול צמיחה צפויה של +6.3% (CAGR הכנסות 3 שנים +3.6%). האודיטור: איתנות 69.4, 3 אינדיקטורים מקדימים חיוביים ו-0 שליליים (מגמת שיפור). מקורבים: 5 מכירות ו-0 קניות. הדוח הבא (הערכה) ב-2026-12-01, בעוד 3 ימים.",
+ "evidence_note_he": "פער הציפיות והתמחור הראו כוח ניבוי בבדיקה המתוקנת (IC 0.088 / 0.072), אבל הם כמעט אותו ציון, וציון תמחור 100 לא מבדיל בין המועמדות המובילות.",
+ "findings": [
+  {
+   "agent": "auditor",
+   "ticker": "AEO",
+   "asOf": "2026-11-28",
+   "trend": "improving",
+   "health": 69.4,
+   "gate_pass": true,
+   "evidence": [
+    {
+     "point": "ציון איתנות פיננסית",
+     "value": "69.4",
+     "field": "auditor.health"
+    },
+    {
+     "point": "מרווח גולמי משתפר",
+     "value": "0.03556398536819766",
+     "field": "auditor.leading.signals[gross_margin]"
+    },
+    {
+     "point": "Accruals משתפר",
+     "value": "-0.06438746582223931",
+     "field": "auditor.leading.signals[accruals]"
+    }
+   ],
+   "red_flags": [],
+   "unknown": [],
+   "summary_he": "איתנות 69.4, 3 אינדיקטורים מקדימים חיוביים ו-0 שליליים (מגמת שיפור). מקורבים: 5 מכירות ו-0 קניות."
+  }
+ ]
+}
