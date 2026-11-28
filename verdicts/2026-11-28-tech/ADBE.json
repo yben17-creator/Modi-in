@@ -1,0 +1,59 @@
+{
+ "agent": "maestro",
+ "version": "maestro-v0-stage2",
+ "ticker": "ADBE",
+ "asOf": "2026-11-28",
+ "score": 81.7,
+ "confidence": "medium",
+ "base": {
+  "gap": 76.7,
+  "valuation": 100
+ },
+ "adjustments": [
+  {
+   "by": "auditor",
+   "delta": 5,
+   "why_he": "מגמת שיפור באינדיקטורים מקדימים"
+  }
+ ],
+ "conflicts": [
+  "2 מכירות מקורבים חריגות (כ-31.5 מיליון $); ציון סיכון 66.8."
+ ],
+ "next_report": {
+  "date": "2026-12-09",
+  "estimated": true,
+  "days_away": 11
+ },
+ "summary_he": "פער ציפיות 76.7 ותמחור 100: לפי ה-DCF ההפוך המחיר מגלם צמיחה של -7.7% בשנה מול צמיחה צפויה של +11.2% (CAGR הכנסות 3 שנים +10.5%). האודיטור: איתנות 85, 3 אינדיקטורים מקדימים חיוביים ו-0 שליליים (מגמת שיפור). מקורבים: 13 מכירות ו-1 קניות. סיכון עיקרי: 2 מכירות מקורבים חריגות (כ-31.5 מיליון $); ציון סיכון 66.8. הדוח הבא (הערכה) ב-2026-12-09, בעוד 11 ימים.",
+ "evidence_note_he": "בטכנולוגיה בלבד פער הציפיות הראה IC 0.114 בתקופת האימון (REGISTRY E0′-tech), אבל הוא בעיקר ציון התמחור, ובכספת 2026 הפער בין החמישונים לא החזיק. מנבא ה-guidance ואותות הנרות ללא כוח ניבוי מוכח.",
+ "findings": [
+  {
+   "agent": "auditor",
+   "ticker": "ADBE",
+   "asOf": "2026-11-28",
+   "trend": "improving",
+   "health": 85,
+   "gate_pass": true,
+   "evidence": [
+    {
+     "point": "ציון איתנות פיננסית",
+     "value": "85",
+     "field": "auditor.health"
+    },
+    {
+     "point": "Accruals משתפר",
+     "value": "-0.11992849238103345",
+     "field": "auditor.leading.signals[accruals]"
+    },
+    {
+     "point": "עקביות FCF משתפר",
+     "value": "3",
+     "field": "auditor.leading.signals[fcf_consistency]"
+    }
+   ],
+   "red_flags": [],
+   "unknown": [],
+   "summary_he": "איתנות 85, 3 אינדיקטורים מקדימים חיוביים ו-0 שליליים (מגמת שיפור). מקורבים: 13 מכירות ו-1 קניות."
+  }
+ ]
+}
